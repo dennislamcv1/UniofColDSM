@@ -1,0 +1,133 @@
+---
+title: "Describing Data Graphically"
+output: html_notebook
+---
+
+```{r}
+
+# Load necessary libraries
+library(tidyverse)
+
+# Read the data
+viscosity_data <- read.table("viscosity.txt", header = TRUE)
+
+# Inspect the data
+str(viscosity_data)
+summary(viscosity_data)
+
+
+
+```
+
+```{r}
+# Generate a grouped frequency distribution
+viscosity_bins <- cut(viscosity_data$centistokes, breaks = seq(floor(min(viscosity_data$centistokes)), ceiling(max(viscosity_data$centistokes)), by = 5))
+
+# Create frequency table
+viscosity_freq <- table(viscosity_bins)
+viscosity_freq
+
+# Calculate relative frequencies
+viscosity_rel_freq <- prop.table(viscosity_freq)
+viscosity_rel_freq
+
+```
+
+```{r}
+# Create a grouped histogram
+ggplot(viscosity_data, aes(x = centistokes)) +
+  geom_histogram(binwidth = 5, fill = "blue", color = "black") +
+  labs(title = "Grouped Histogram of Viscosity", x = "Viscosity (centistokes)", y = "Frequency")
+
+
+
+
+```
+
+```{r}
+# Five-number summary
+five_num_summary <- fivenum(viscosity_data$centistokes)
+names(five_num_summary) <- c("Minimum", "1st Quartile", "Median", "3rd Quartile", "Maximum")
+five_num_summary
+
+
+```
+
+```{r}
+# Create a box and whisker plot
+ggplot(viscosity_data, aes(y = centistokes)) +
+  geom_boxplot() +
+  labs(title = "Box and Whisker Plot of Viscosity", y = "Viscosity (centistokes)")
+
+```
+
+```{r}
+# Find the second highest frequency bin
+sorted_freq <- sort(viscosity_freq, decreasing = TRUE)
+second_highest_freq_bin <- names(sorted_freq)[2]
+
+# Calculate the midpoint
+bin_edges <- as.numeric(unlist(strsplit(gsub("[^0-9\\.\\-]", " ", second_highest_freq_bin), " ")))
+midpoint_second_highest <- mean(bin_edges)
+midpoint_second_highest
+
+# Find the highest relative frequency value
+highest_rel_freq <- max(viscosity_rel_freq)
+highest_rel_freq
+
+# Number of bars in the histogram
+num_bars <- length(viscosity_freq)
+num_bars
+
+# First and last values on the x-axis
+x_axis_range <- range(as.numeric(names(viscosity_freq)))
+x_axis_range
+
+# Y-axis range for the boxplot
+y_axis_range_boxplot <- range(viscosity_data$centistokes)
+y_axis_range_boxplot
+
+
+# Median of the viscosity data
+median_viscosity <- median(viscosity_data$centistokes)
+median_viscosity
+
+
+
+```
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+
+# Read the data
+yield_data <- read.table("yield.txt", header = TRUE)
+
+# Inspect the data
+str(yield_data)
+summary(yield_data)
+
+# Create a histogram with density plot
+histogram <- ggplot(yield_data, aes(x = strength)) +
+  geom_histogram(aes(y = ..density..), binwidth = 10, fill = "blue", color = "black") +
+  geom_density(alpha = 0.2, fill = "red") +
+  labs(title = "Histogram with Density Plot of Yield Strength", x = "Yield Strength", y = "Density")
+
+# Print the histogram
+print(histogram)
+
+# Find the value at which the highest density occurs
+density_data <- density(yield_data$strength)
+max_density_value <- density_data$x[which.max(density_data$y)]
+max_density_value_rounded <- round(max_density_value)
+max_density_value_rounded
+
+# Get the first and last values on the y-axis of the histogram
+histogram_build <- ggplot_build(histogram)
+y_axis_range <- range(histogram_build$layout$panel_params[[1]]$y.range)
+y_axis_range
+
+
+
+```
+

@@ -1,0 +1,73 @@
+---
+title: "Describing Data Numerically Notebook"
+output: html_notebook
+---
+```{r}
+# Read the data
+viscosity_data <- read.table("viscosity.txt", header = TRUE)$centistokes
+
+# Using summary() to get the highest and lowest values
+summary(viscosity_data)
+
+# Using range() to get the highest and lowest values
+range(viscosity_data)
+
+# Calculating the range
+range_value <- diff(range(viscosity_data))
+range_value
+
+```
+
+```{r}
+# Find the 45th percentile
+quantile(viscosity_data, probs = 0.45)
+
+
+# Find the 45th percentile
+percentile_45 <- quantile(viscosity_data, probs = 0.45)
+percentile_45
+
+
+
+```
+
+```{r}
+library(moments)
+
+# Read the data
+data <- read.table("yield.txt", header=TRUE)
+
+# Calculate skewness
+skewness_value <- skewness(data$strength)
+skewness_value
+
+# Calculate kurtosis
+kurtosis_value <- kurtosis(data$strength)
+kurtosis_value
+
+```
+
+```{r}
+# Read the data
+data <- read.table("body.txt", header=TRUE)
+
+# Calculate the Pearson correlation coefficient
+correlation <- cor(data$height, data$weight)
+round(correlation, 3)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

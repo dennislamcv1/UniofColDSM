@@ -1,0 +1,36 @@
+---
+title: "Probability and Probability Distributions Notebook"
+output: html_notebook
+---
+
+```{r}
+lambda <- 65
+k <- 50
+prob <- 1 - ppois(k-1, lambda)
+round(prob, 4)
+
+
+
+mu <- 153
+sigma <- 10
+LSL <- 154
+USL <- 164
+
+p_lower <- pnorm(LSL, mean=mu, sd=sigma)
+p_upper <- 1 - pnorm(USL, mean=mu, sd=sigma)
+
+prob_out_of_spec <- p_lower + p_upper
+round(prob_out_of_spec, 4)
+
+
+mu <- 40000
+x <- 10000
+lambda <- 1 / mu
+
+prob_failure <- pexp(x, rate=lambda)
+round(prob_failure, 4)
+
+
+
+```
+

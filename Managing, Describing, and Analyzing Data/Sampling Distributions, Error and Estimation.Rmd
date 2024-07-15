@@ -1,0 +1,116 @@
+---
+title: "Sampling Distributions, Error and Estimation"
+output: html_notebook
+---
+
+```{r}
+# Step 1: Create a vector of normally distributed numbers
+set.seed(145)
+normal_vector <- rnorm(10000, mean = 5, sd = 1)
+mean_normal <- mean(normal_vector)
+cat("Mean of normally distributed data: ", round(mean_normal, 4), "\n")
+
+# Step 2: Generate exponential samples and calculate the means
+set.seed(100)
+exp_means <- replicate(5000, mean(rexp(100, rate = 1/5)))
+
+# Step 3: Calculate skewness and kurtosis
+if (!require(moments)) install.packages("moments")
+library(moments)
+skewness_exp_means <- skewness(exp_means)
+kurtosis_exp_means <- kurtosis(exp_means)
+cat("Skewness of the means of the sampled data: ", round(skewness_exp_means, 4), "\n")
+cat("Kurtosis of the means of the sampled data: ", round(kurtosis_exp_means, 4), "\n")
+
+# Step 4: Determine the shape of the distribution
+# According to the Central Limit Theorem, the distribution of sample means will be approximately normal.
+
+# Step 5: Factors influencing the shape of the distribution
+# Factors: The original shape of the distribution, the sample size, and the Central Limit Theorem.
+
+
+
+```
+```{r}
+sigma <- 10
+n <- 15
+SEM <- sigma / sqrt(n)
+SEM
+# The standard error of the mean to 4 decimal places
+
+mu <- 1.575
+sigma <- 0.01
+n <- 5
+x_bar <- 1.580
+SEM_5 <- sigma / sqrt(n)
+z_5 <- (x_bar - mu) / SEM_5
+prob_5 <- 1 - pnorm(z_5)
+prob_5
+# The probability of drawing a sample with a mean of 1.580 or more to 4 decimal places
+
+
+n <- 10
+x_bar <- 1.572
+SEM_10 <- sigma / sqrt(n)
+z_10 <- (x_bar - mu) / SEM_10
+prob_10 <- pnorm(z_10)
+prob_10
+# The probability of drawing a sample with a mean of 1.572 or less to 4 decimal places
+
+
+```
+```{r}
+
+# Load the data from the CSV file
+preforms <- read.csv("preforms.csv")
+
+# Check the first few rows to ensure the data is loaded correctly
+head(preforms)
+
+# Ensure the correct column is selected
+if ("weight" %in% colnames(preforms)) {
+  weights <- preforms$weight
+} else {
+  stop("The 'weight' column is not found in the data.")
+}
+
+# Check the loaded weights
+print(weights)
+
+```
+
+```{r}
+
+# Point estimate for the mean
+mean_weight <- mean(weights)
+cat("Point estimate for the mean (𝝻):", round(mean_weight, 4), "\n")
+
+# 95% confidence interval for the mean
+n <- length(weights)
+se_mean <- sd(weights) / sqrt(n)
+alpha <- 0.05
+error_margin <- qt(1 - alpha/2, df = n - 1) * se_mean
+lower_confidence_limit <- mean_weight - error_margin
+upper_confidence_limit <- mean_weight + error_margin
+cat("Lower confidence limit for the mean (95%):", round(lower_confidence_limit, 4), "\n")
+cat("Upper confidence limit for the mean (95%):", round(upper_confidence_limit, 4), "\n")
+
+
+
+```
+
+```{r}
+# Point estimate for the variance
+variance_weight <- var(weights)
+cat("Point estimate for the variance (σ²):", round(variance_weight, 4), "\n")
+
+# 90% confidence interval for the variance
+alpha_var <- 0.10
+chi_sq_lower <- qchisq(alpha_var/2, df = n - 1)
+chi_sq_upper <- qchisq(1 - alpha_var/2, df = n - 1)
+lower_confidence_limit_var <- (n - 1) * variance_weight / chi_sq_upper
+upper_confidence_limit_var <- (n - 1) * variance_weight / chi_sq_lower
+cat("Lower confidence limit for the variance (90%):", round(lower_confidence_limit_var, 4), "\n")
+cat("Upper confidence limit for the variance (90%):", round(upper_confidence_limit_var, 4), "\n")
+```
+
