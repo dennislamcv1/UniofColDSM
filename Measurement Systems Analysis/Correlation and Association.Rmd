@@ -1,0 +1,230 @@
+---
+title: "Correlation and Association Notebook"
+output: html_notebook
+---
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+```
+```{r}
+# Load necessary libraries
+library(readr)
+
+
+
+# Load the data
+data <- read_table("CapPull.dat")
+
+# Inspect the data structure
+str(data)
+summary(data)
+
+```
+```{r}
+# Perform Pearson correlation test
+cor_test <- cor.test(data$fid, data$cpf)
+cor_test
+```
+
+
+```{r}
+
+# Extract the sample statistic
+sample_statistic <- cor_test$estimate
+
+# Hypothesized value being tested
+hypothesized_value <- 0
+
+# Appropriate statistical test
+statistical_test <- "t-test for Pearson's r"
+```
+
+
+```{r}
+# P-value of the statistical test
+p_value <- cor_test$p.value
+
+# Conclusion regarding the null hypothesis
+conclusion <- ifelse(p_value < 0.10, "Reject the null hypothesis", "Fail to reject the null hypothesis")
+```
+
+```{r}
+# Output the results
+list(
+  sample_statistic = sample_statistic,
+  hypothesized_value = hypothesized_value,
+  statistical_test = statistical_test,
+  p_value = p_value,
+  conclusion = conclusion
+)
+```
+
+
+```{r}
+# Given values
+r1 <- 0.84
+r2 <- 0.73
+n <- 75
+
+# Fisher's z-transformation
+z1 <- 0.5 * log((1 + r1) / (1 - r1))
+z2 <- 0.5 * log((1 + r2) / (1 - r2))
+
+# Test statistic
+z <- (z1 - z2) / sqrt(1 / (n - 3))
+
+# P-value
+p_value <- 2 * (1 - pnorm(abs(z)))
+
+# Results
+sample_statistic <- r1
+hypothesized_value <- r2
+statistical_test <- "Fisher's Z"
+conclusion <- ifelse(p_value < 0.05, "Reject the Null Hypothesis", "Fail to Reject the Null Hypothesis")
+
+list(
+  sample_statistic = sample_statistic,
+  hypothesized_value = hypothesized_value,
+  statistical_test = statistical_test,
+  p_value = p_value,
+  conclusion = conclusion
+)
+
+```
+
+
+```{r}
+
+# Load necessary libraries
+library(readr)
+
+# Load the data
+data <- read_table("LawnChr.dat")
+
+# Inspect the data structure
+str(data)
+summary(data)
+
+# Perform linear regression
+model <- lm(Surface_Quality ~ Speed_FPM, data = data)
+
+# Summary of the model
+model_summary <- summary(model)
+
+# Extract the sample statistic (slope coefficient)
+sample_statistic <- model_summary$coefficients[2, 1]
+
+# Hypothesized value being tested
+hypothesized_value <- 0
+
+# Appropriate statistical test
+statistical_test <- "t-test for the regression coefficient"
+
+# P-value of the statistical test
+p_value <- model_summary$coefficients[2, 4]
+
+# Conclusion regarding the null hypothesis
+conclusion <- ifelse(p_value < 0.05, "Reject the Null Hypothesis", "Fail to Reject the Null Hypothesis")
+
+# Output the results
+list(
+  sample_statistic = sample_statistic,
+  hypothesized_value = hypothesized_value,
+  statistical_test = statistical_test,
+  p_value = p_value,
+  conclusion = conclusion
+)
+
+
+
+```
+
+```{r}
+# Load necessary libraries
+library(readr)
+library(dplyr)
+
+# Load the data
+data <- read_table("Sales.dat")
+
+# Inspect the data structure
+str(data)
+summary(data)
+
+# Perform ANOVA
+anova_model <- aov(time ~ clerk, data = data)
+
+# Summary of the ANOVA model
+anova_summary <- summary(anova_model)
+
+# Extract the sample statistic (F-statistic)
+sample_statistic <- anova_summary[[1]][["F value"]][1]
+
+# Hypothesized value being tested
+hypothesized_value <- "All clerks have the same mean processing time"
+
+# Appropriate statistical test
+statistical_test <- "ANOVA (Analysis of Variance)"
+
+# P-value of the statistical test
+p_value <- anova_summary[[1]][["Pr(>F)"]][1]
+
+# Conclusion regarding the null hypothesis
+conclusion <- ifelse(p_value < 0.05, "Reject the Null Hypothesis", "Fail to Reject the Null Hypothesis")
+
+# Output the results
+list(
+  sample_statistic = sample_statistic,
+  hypothesized_value = hypothesized_value,
+  statistical_test = statistical_test,
+  p_value = p_value,
+  conclusion = conclusion
+)
+
+```
+
+```{r}
+# Load necessary libraries
+library(readr)
+library(dplyr)
+
+# Load the data
+data <- read_table("Beverage.dat")
+
+# Inspect the data structure
+str(data)
+summary(data)
+
+# Create a contingency table
+contingency_table <- table(data$region, data$ct)
+
+# Perform Chi-Square test
+chi_square_test <- chisq.test(contingency_table)
+
+# Extract the sample statistic (Chi-Square statistic)
+sample_statistic <- chi_square_test$statistic
+
+# Hypothesized value being tested
+hypothesized_value <- "There is no relationship between beverage container preference and geographical region"
+
+# Appropriate statistical test
+statistical_test <- "Chi-Square test for independence"
+
+# P-value of the statistical test
+p_value <- chi_square_test$p.value
+
+# Conclusion regarding the null hypothesis
+conclusion <- ifelse(p_value < 0.05, "Reject the Null Hypothesis", "Fail to Reject the Null Hypothesis")
+
+# Output the results
+list(
+  sample_statistic = sample_statistic,
+  hypothesized_value = hypothesized_value,
+  statistical_test = statistical_test,
+  p_value = p_value,
+  conclusion = conclusion
+)
+
+```
+
