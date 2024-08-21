@@ -5,6 +5,53 @@ date: "2024-08-20"
 ---
 
 ```{r}
+# Parameters
+alpha <- 0.01
+n <- 20
+delta_mu <- 1
+sigma <- 2.0
+
+# Calculate the effect size
+effect_size <- delta_mu / (sigma / sqrt(n))
+
+# Calculate power using the pwr library
+# Install the pwr package if you haven't already by running install.packages("pwr")
+library(pwr)
+power_result <- pwr.t.test(n = n, d = effect_size, sig.level = alpha, type = "one.sample", alternative = "two.sided")
+
+# Print the power rounded to 4 decimal places
+round(power_result$power, 4)
+
+```
+
+```{r}
+# Parameters
+alpha <- 0.01
+beta <- 0.05
+delta_mu <- 1
+sigma <- 2.0
+
+# Find the z-values for the significance level and power
+z_alpha <- qnorm(1 - alpha / 2)  # Two-tailed test
+z_beta <- qnorm(1 - beta)
+
+# Calculate the minimum sample size
+n <- ((z_alpha + z_beta) * sigma / delta_mu)^2
+
+# Round up to the next whole number
+ceiling(n)
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
 # Step 1: Load the data
 # Assuming the data is in a CSV format
 tool_life_data <- read.table("ToolLife.dat", header = TRUE)
@@ -38,7 +85,104 @@ print(variance_by_vendor)
 
 ```
 
+```{r}
+# Load the data
+data <- read.table("Straight.dat", header = TRUE)
+
+str(data)
+
+# Conduct a paired t-test
+result <- t.test(data$before, data$after, paired = TRUE)
+
+# Output the t-statistic to four decimal places
+t_statistic <- round(result$statistic, 4)
+t_statistic
 
 
+```
+
+```{r}
+# Conduct a paired t-test
+result <- t.test(data$before, data$after, paired = TRUE)
+
+# Output the t-statistic and p-value
+t_statistic <- round(result$statistic, 4)
+p_value <- result$p.value
+
+# Print the results
+t_statistic
+p_value
+
+```
+
+```{r}
+# Input data
+before <- c(0.016, 0.014, 0.008, 0.013, 0.019, 0.027, 0.017, 0.020, 0.017, 0.018,
+            0.016, 0.011, 0.019, 0.014, 0.023, 0.020, 0.019, 0.016, 0.017, 0.022)
+
+after <- c(0.009, 0.011, 0.006, 0.010, 0.014, 0.016, 0.010, 0.012, 0.013, 0.008,
+           0.007, 0.006, 0.010, 0.007, 0.011, 0.010, 0.015, 0.004, 0.008, 0.014)
+
+# Calculate the variances
+var_before <- var(before)
+var_after <- var(after)
+
+# Calculate the F-test statistic
+f_statistic <- var_before / var_after
+
+# Print the F-statistic rounded to 4 decimal places
+round(f_statistic, 4)
+
+```
+
+```{r}
+# Input data
+before <- c(0.016, 0.014, 0.008, 0.013, 0.019, 0.027, 0.017, 0.020, 0.017, 0.018,
+            0.016, 0.011, 0.019, 0.014, 0.023, 0.020, 0.019, 0.016, 0.017, 0.022)
+
+after <- c(0.009, 0.011, 0.006, 0.010, 0.014, 0.016, 0.010, 0.012, 0.013, 0.008,
+           0.007, 0.006, 0.010, 0.007, 0.011, 0.010, 0.015, 0.004, 0.008, 0.014)
+
+# Perform paired t-test
+t_test_result <- t.test(before, after, paired = TRUE)
+
+# Extract and print the t-test statistic rounded to 4 decimal places
+round(t_test_result$statistic, 4)
+
+```
+
+
+```{r}
+p1 <- 0.054
+p2 <- 0.036
+n1 <- 500
+n2 <- 500
+
+# Pooled proportion
+p_pool <- (p1 * n1 + p2 * n2) / (n1 + n2)
+
+# Test statistic
+z <- (p1 - p2) / sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
+
+# p-value for the two-tailed test
+p_value <- 2 * pnorm(-abs(z))
+p_value
+
+```
+
+```{r}
+lambda1 <- 7.5
+lambda2 <- 10
+n1 <- 2
+n2 <- 1
+
+# Z-test statistic
+Z <- (lambda1 - lambda2) / sqrt((lambda1 / n1) + (lambda2 / n2))
+
+# p-value calculation
+p_value <- pnorm(Z)
+p_value
+
+```
 
 
