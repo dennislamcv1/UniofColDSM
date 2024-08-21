@@ -1,188 +1,44 @@
 ---
 title: "Two Sample Hypothesis Testing"
 output: html_document
-date: "2024-07-14"
+date: "2024-08-20"
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
 ```{r}
-# Load necessary libraries
-library(dplyr)
+# Step 1: Load the data
+# Assuming the data is in a CSV format
+tool_life_data <- read.table("ToolLife.dat", header = TRUE)
 
-# Load the data
-data <- read.csv('ToolLife.csv')
+# Step 2: Explore the data
+summary(tool_life_data)
 
-# View the first few rows of the data
-head(data)
+# Check the structure of the data
+str(tool_life_data)
 
-# Calculate mean and variance for each vendor
-summary_stats <- data %>%
-  group_by(vendor) %>%
-  summarise(
-    mean_life = mean(life),
-    variance_life = var(life)
-  )
+# Step 3: Conduct a Two-Sample T-Test
+# Assuming the data has a column 'Life' for cutting life and a column 'Vendor' for vendor label
+t_test_result <- t.test(life ~ vendor, data = tool_life_data)
 
-print(summary_stats)
+# Step 4: Output the test results
+print(t_test_result)
 
-# Hypothesis testing for the means
-t_test_results <- t.test(life ~ vendor, data = data)
-
-# Display the t-test results
-print(t_test_results)
-
-```
-
-```{r}
-# Data
-straight_data <- data.frame(
-  before = c(0.008, 0.006, 0.010, 0.012, 0.009, 0.008, 0.011, 0.010, 0.016, 0.004,
-             0.016, 0.012, 0.014, 0.013, 0.012, 0.013, 0.015, 0.013, 0.012, 0.013),
-  after = c(0.004, 0.005, 0.022, 0.020, 0.014, 0.015, 0.008, 0.012, 0.013, 0.017,
-            0.014, 0.016, 0.013, 0.011, 0.010, 0.014, 0.006, 0.008, 0.015, 0.013)
-)
+# Determine which vendor has a higher mean
+mean_by_vendor <- aggregate(life ~ vendor, data = tool_life_data, mean)
+print(mean_by_vendor)
 
 ```
 
 
 ```{r}
-# Paired t-test
-t_test_result <- t.test(straight_data$before, straight_data$after, paired = TRUE)
+# Calculate the variance for each vendor
+variance_by_vendor <- aggregate(life ~ vendor, data = tool_life_data, var)
 
-# Display test results
-t_test_result
-
-```
-
-```{r}
-# Given F statistic
-F_value <- 0.6233
-
-# Degrees of freedom
-df1 <- 11
-df2 <- 14
-
-# Calculate the p-value
-p_value <- pf(F_value, df1, df2, lower.tail = TRUE) * 2
-p_value
+# Print the variances for each vendor
+print(variance_by_vendor)
 
 ```
 
-```{r}
 
-# Load necessary libraries
-library(tidyverse)
-library(ggplot2)
-library(broom)
-
-# Load the data
-data <- read.table(text = "before after
-0.016 0.009
-0.014 0.011
-0.008 0.006
-0.013 0.010
-0.019 0.014
-0.027 0.016
-0.017 0.010
-0.020 0.012
-0.017 0.013
-0.018 0.008
-0.016 0.007
-0.011 0.006
-0.019 0.010
-0.014 0.007
-0.023 0.011
-0.020 0.010
-0.019 0.015
-0.016 0.004
-0.017 0.008
-0.022 0.014", header = TRUE)
-
-# Check data structure
-str(data)
-
-
-# Normality test (Shapiro-Wilk)
-# Shapiro-Wilk test for normality
-shapiro.test(data$before)
-shapiro.test(data$after)
-
-
-# F-test for equal variances
-var.test(data$before, data$after)
-
-# Paired t-test
-t.test(data$before, data$after, paired = TRUE)
-
-
-
-```
-
-```{r}
-library(ggplot2)
-
-# Data
-data <- data.frame(
-  before = c(0.016, 0.014, 0.008, 0.013, 0.019, 0.027, 0.017, 0.020, 0.017, 0.018, 0.016, 0.011, 0.019, 0.014, 0.023, 0.020, 0.019, 0.016, 0.017, 0.022),
-  after = c(0.009, 0.011, 0.006, 0.010, 0.014, 0.016, 0.010, 0.012, 0.013, 0.008, 0.007, 0.006, 0.010, 0.007, 0.011, 0.010, 0.015, 0.004, 0.008, 0.014)
-)
-
-# Iso-Plot
-ggplot(data, aes(x = before, y = after)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") + # ISO line
-  geom_smooth(method = "lm", se = FALSE, color = "blue") + # Line of best fit
-  labs(title = "Iso-Plot of Out-of-Flatness Before and After Tempering",
-       x = "Before Tempering",
-       y = "After Tempering") +
-  theme_minimal()
-
-```
-
-```{r}
-# Parameters
-accidents_before <- 15
-years_before <- 2
-accidents_after <- 10
-years_after <- 1
-
-# Calculate rates
-rate_before <- accidents_before / years_before  # Rate before program
-rate_after <- accidents_after / years_after     # Rate after program
-
-# Calculate p-value using Poisson distribution
-p_value <- ppois(accidents_after - 1, rate_before)  # ppois gives P(X ≤ accidents_after - 1) for Poisson(rate_before)
-
-# Display p-value
-p_value
-
-```
-
-```{r}
-# Creating the contingency table based on provided data
-mcnemar_table <- matrix(c(10, 4, 34, 102), nrow = 2, byrow = TRUE,
-                        dimnames = list("Before Buffing" = c("Reject", "Accept"),
-                                        "After Buffing" = c("Reject", "Accept")))
-
-# Performing McNemar's Test
-test_result <- mcnemar.test(mcnemar_table)
-
-# Displaying the result
-test_result
-
-# Interpretation
-dependency_source <- "Repeated measures"
-p_value <- test_result$p.value
-null_hypothesis_decision <- ifelse(p_value < 0.05, "Reject the Null Hypothesis", "Accept / Fail to Reject the Null Hypothesis")
-
-list(dependency_source = dependency_source, p_value = p_value, null_hypothesis_decision = null_hypothesis_decision)
-
-
-```
 
 
 

@@ -1,116 +1,242 @@
 ---
 title: "Sampling Distributions, Error and Estimation"
-output: html_notebook
+output: html_document
+date: "2024-08-20"
 ---
 
 ```{r}
-# Step 1: Create a vector of normally distributed numbers
+# Set the seed value for reproducibility
 set.seed(145)
-normal_vector <- rnorm(10000, mean = 5, sd = 1)
-mean_normal <- mean(normal_vector)
-cat("Mean of normally distributed data: ", round(mean_normal, 4), "\n")
 
-# Step 2: Generate exponential samples and calculate the means
-set.seed(100)
-exp_means <- replicate(5000, mean(rexp(100, rate = 1/5)))
+# Generate a vector of 10,000 normally distributed numbers with mean 5 and standard deviation 1
+data_vector <- rnorm(10000, mean = 5, sd = 1)
 
-# Step 3: Calculate skewness and kurtosis
-if (!require(moments)) install.packages("moments")
+# Calculate the mean of the data
+mean_value <- mean(data_vector)
+
+# Print the mean value rounded to 4 decimal places
+round(mean_value, 4)
+
+```
+
+```{r}
+# Load the necessary package for skewness calculation
 library(moments)
-skewness_exp_means <- skewness(exp_means)
-kurtosis_exp_means <- kurtosis(exp_means)
-cat("Skewness of the means of the sampled data: ", round(skewness_exp_means, 4), "\n")
-cat("Kurtosis of the means of the sampled data: ", round(kurtosis_exp_means, 4), "\n")
-
-# Step 4: Determine the shape of the distribution
-# According to the Central Limit Theorem, the distribution of sample means will be approximately normal.
-
-# Step 5: Factors influencing the shape of the distribution
-# Factors: The original shape of the distribution, the sample size, and the Central Limit Theorem.
 
 
+# Set the seed value for reproducibility
+set.seed(100)
 
-```
-```{r}
-sigma <- 10
-n <- 15
-SEM <- sigma / sqrt(n)
-SEM
-# The standard error of the mean to 4 decimal places
+sample_means <- replicate(5000, mean(rexp(100, rate = 1/5)))
 
-mu <- 1.575
-sigma <- 0.01
-n <- 5
-x_bar <- 1.580
-SEM_5 <- sigma / sqrt(n)
-z_5 <- (x_bar - mu) / SEM_5
-prob_5 <- 1 - pnorm(z_5)
-prob_5
-# The probability of drawing a sample with a mean of 1.580 or more to 4 decimal places
-
-
-n <- 10
-x_bar <- 1.572
-SEM_10 <- sigma / sqrt(n)
-z_10 <- (x_bar - mu) / SEM_10
-prob_10 <- pnorm(z_10)
-prob_10
-# The probability of drawing a sample with a mean of 1.572 or less to 4 decimal places
+library(e1071)
+skewness_value <- skewness(sample_means)
+round(skewness_value, 4)
 
 
 ```
+
+
 ```{r}
+library(e1071)
+kurtosis_value <- kurtosis(sample_means)
+round(kurtosis_value, 4)
 
-# Load the data from the CSV file
-preforms <- read.csv("preforms.csv")
+```
 
-# Check the first few rows to ensure the data is loaded correctly
-head(preforms)
 
-# Ensure the correct column is selected
-if ("weight" %in% colnames(preforms)) {
-  weights <- preforms$weight
-} else {
-  stop("The 'weight' column is not found in the data.")
-}
 
-# Check the loaded weights
-print(weights)
+```{r}
+# Load the necessary package for kurtosis calculation
+library(moments)
+
+# Set the seed value for reproducibility
+set.seed(100)
+
+# Define parameters
+lambda <- 1/5          # Rate parameter for the exponential distribution (mean = 5)
+sample_size <- 100      # Sample size
+num_samples <- 5000     # Number of samples
+
+# Generate 5000 samples of size 100 from the exponential distribution
+sample_means <- replicate(num_samples, mean(rexp(sample_size, rate = lambda)))
+
+# Calculate the kurtosis of the sample means
+kurtosis_value <- kurtosis(sample_means)
+
+# Print the kurtosis value rounded to 4 decimal places
+round(kurtosis_value, 4)
 
 ```
 
 ```{r}
 
-# Point estimate for the mean
-mean_weight <- mean(weights)
-cat("Point estimate for the mean (𝝻):", round(mean_weight, 4), "\n")
-
-# 95% confidence interval for the mean
-n <- length(weights)
-se_mean <- sd(weights) / sqrt(n)
-alpha <- 0.05
-error_margin <- qt(1 - alpha/2, df = n - 1) * se_mean
-lower_confidence_limit <- mean_weight - error_margin
-upper_confidence_limit <- mean_weight + error_margin
-cat("Lower confidence limit for the mean (95%):", round(lower_confidence_limit, 4), "\n")
-cat("Upper confidence limit for the mean (95%):", round(upper_confidence_limit, 4), "\n")
+```
 
 
+
+
+```{r}
+
+# Load the data from the file
+data <- read.table("preforms.dat", header = TRUE)
+
+# Calculate the mean of the weights
+mean_weight <- mean(data$weight)
+
+# Print the result rounded to four decimal places
+mean_weight_rounded <- round(mean_weight, 4)
+mean_weight_rounded
 
 ```
 
 ```{r}
+
+
+# Calculate the mean and standard error
+mean_weight <- mean(data$weight)
+std_error <- sd(data$weight) / sqrt(length(data$weight))
+
+# Calculate the 95% confidence interval
+conf_interval <- mean_weight + c(-1, 1) * qt(0.975, df = length(data$weight) - 1) * std_error
+
+# Extract the lower confidence limit
+lower_conf_limit <- round(conf_interval[1], 4)
+lower_conf_limit
+
+```
+
+```{r}
+# Extract the upper confidence limit
+upper_conf_limit <- round(conf_interval[2], 4)
+upper_conf_limit
+```
+
+```{r}
+
+
+# Calculate the variance
+variance_weight <- var(data$weight)
+
+# Print the result rounded to four decimal places
+variance_weight_rounded <- round(variance_weight, 4)
+variance_weight_rounded
+
+```
+
+```{r}
+
+
+# Number of observations
+n <- length(data$weight)
+
 # Point estimate for the variance
-variance_weight <- var(weights)
-cat("Point estimate for the variance (σ²):", round(variance_weight, 4), "\n")
+variance_weight <- var(data$weight)
 
-# 90% confidence interval for the variance
-alpha_var <- 0.10
-chi_sq_lower <- qchisq(alpha_var/2, df = n - 1)
-chi_sq_upper <- qchisq(1 - alpha_var/2, df = n - 1)
-lower_confidence_limit_var <- (n - 1) * variance_weight / chi_sq_upper
-upper_confidence_limit_var <- (n - 1) * variance_weight / chi_sq_lower
-cat("Lower confidence limit for the variance (90%):", round(lower_confidence_limit_var, 4), "\n")
-cat("Upper confidence limit for the variance (90%):", round(upper_confidence_limit_var, 4), "\n")
+# Calculate the chi-squared critical values
+chi2_lower <- qchisq(0.95, df = n - 1)
+chi2_upper <- qchisq(0.05, df = n - 1)
+
+# Calculate the lower and upper confidence limits
+lower_conf_limit_variance <- ((n - 1) * variance_weight) / chi2_lower
+upper_conf_limit_variance <- ((n - 1) * variance_weight) / chi2_upper
+
+# Round the results to four decimal places
+lower_conf_limit_variance_rounded <- round(lower_conf_limit_variance, 4)
+upper_conf_limit_variance_rounded <- round(upper_conf_limit_variance, 4)
+
+# Display the results
+lower_conf_limit_variance_rounded
+upper_conf_limit_variance_rounded
+
 ```
+
+```{r}
+# Define the sample size and number of nonconforming parts
+n <- 500
+x <- 15
+
+# Calculate the sample proportion
+p_hat <- x / n
+
+# Calculate the standard error
+SE <- sqrt(p_hat * (1 - p_hat) / n)
+
+# Calculate the z-score for a 95% confidence level
+z <- qnorm(0.975)
+
+# Calculate the lower and upper confidence limits
+lower_conf_limit <- p_hat - z * SE
+upper_conf_limit <- p_hat + z * SE
+
+# Round the results to four decimal places
+lower_conf_limit_rounded <- round(lower_conf_limit, 4)
+upper_conf_limit_rounded <- round(upper_conf_limit, 4)
+
+# Display the results
+lower_conf_limit_rounded
+upper_conf_limit_rounded
+
+```
+
+```{r}
+# Given values
+n <- 500      # Sample size
+x <- 15       # Number of nonconforming parts
+p_hat <- x / n  # Sample proportion
+
+# Calculate the 95% confidence interval
+alpha <- 0.05
+z <- qnorm(1 - alpha/2)  # Z-score for 95% confidence
+
+# Standard error
+se <- sqrt(p_hat * (1 - p_hat) / n)
+
+# Confidence interval
+lower_limit <- p_hat - z * se
+upper_limit <- p_hat + z * se
+
+# Round to 4 decimal places
+lower_limit <- round(lower_limit, 4)
+upper_limit <- round(upper_limit, 4)
+
+lower_limit
+upper_limit
+
+```
+
+
+
+
+```{r}
+# Define the sample size and the average number of indications per bar
+n <- 250
+c_bar <- 2.58
+
+# Calculate the total number of indications
+lambda_hat <- n * c_bar
+
+# Calculate the chi-squared critical values
+chi2_lower <- qchisq(0.95, df = 2 * n)
+chi2_upper <- qchisq(0.05, df = 2 * n)
+
+# Calculate the lower and upper confidence limits for lambda
+lower_conf_limit_lambda <- lambda_hat / chi2_lower
+upper_conf_limit_lambda <- lambda_hat / chi2_upper
+
+# Round the results to four decimal places
+lower_conf_limit_lambda_rounded <- round(lower_conf_limit_lambda, 4)
+upper_conf_limit_lambda_rounded <- round(upper_conf_limit_lambda, 4)
+
+# Display the results
+lower_conf_limit_lambda_rounded
+upper_conf_limit_lambda_rounded
+
+```
+
+
+
+
+
+
 
