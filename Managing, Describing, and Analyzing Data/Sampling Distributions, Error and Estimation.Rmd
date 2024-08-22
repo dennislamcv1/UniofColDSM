@@ -20,57 +20,40 @@ round(mean_value, 4)
 ```
 
 ```{r}
-# Load the necessary package for skewness calculation
-library(moments)
+# Random Sampling Distribution Simulation
+require(lolcat)
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
 
-
-# Set the seed value for reproducibility
+# First, set seed so we will get the same results
 set.seed(100)
 
-sample_means <- replicate(5000, mean(rexp(100, rate = 1/5)))
+# Next, create / simulate a random sampling distribution
+n<-100
+reps<-5000
 
-library(e1071)
-skewness_value <- skewness(sample_means)
-round(skewness_value, 4)
+samples <- replicate(reps, rexp(n, rate=5))
+sampleavgs <- colMeans(samples)
 
-
-```
-
-
-```{r}
-library(e1071)
-kurtosis_value <- kurtosis(sample_means)
-round(kurtosis_value, 4)
-
-```
-
-
-
-```{r}
-# Load the necessary package for kurtosis calculation
-library(moments)
-
-# Set the seed value for reproducibility
-set.seed(100)
-
-# Define parameters
-lambda <- 1/5          # Rate parameter for the exponential distribution (mean = 5)
-sample_size <- 100      # Sample size
-num_samples <- 5000     # Number of samples
-
-# Generate 5000 samples of size 100 from the exponential distribution
-sample_means <- replicate(num_samples, mean(rexp(sample_size, rate = lambda)))
-
-# Calculate the kurtosis of the sample means
-kurtosis_value <- kurtosis(sample_means)
-
-# Print the kurtosis value rounded to 4 decimal places
-round(kurtosis_value, 4)
+# Calculate the descriptive statistics of the RSD
+nqtr(summary.continuous(sampleavgs, stat.sd=T),5)
 
 ```
 
 ```{r}
+x = 1.580
+u = 1.575
+n = 5
+sd = 0.01
 
+z = (x -u) / (sd / sqrt(n))
+pnorm(z)
+```
+
+```{r}
+n = 5
+x = 1.572
+z = (x -u) / (sd / sqrt(n))
+pnorm(z)
 ```
 
 
@@ -152,87 +135,29 @@ upper_conf_limit_variance_rounded
 ```
 
 ```{r}
-# Define the sample size and number of nonconforming parts
-n <- 500
-x <- 15
 
-# Calculate the sample proportion
-p_hat <- x / n
-
-# Calculate the standard error
-SE <- sqrt(p_hat * (1 - p_hat) / n)
-
-# Calculate the z-score for a 95% confidence level
-z <- qnorm(0.975)
-
-# Calculate the lower and upper confidence limits
-lower_conf_limit <- p_hat - z * SE
-upper_conf_limit <- p_hat + z * SE
-
-# Round the results to four decimal places
-lower_conf_limit_rounded <- round(lower_conf_limit, 4)
-upper_conf_limit_rounded <- round(upper_conf_limit, 4)
-
-# Display the results
-lower_conf_limit_rounded
-upper_conf_limit_rounded
+ro<-round.object
+n = 500
+m = 15
+p = m/n
+ci = 0.95
+ro(proportion.test.onesample.exact.simple(sample.proportion = p
+                                          ,sample.size = n
+                                          , conf.level = 0.95),4)
 
 ```
 
 ```{r}
-# Given values
-n <- 500      # Sample size
-x <- 15       # Number of nonconforming parts
-p_hat <- x / n  # Sample proportion
+ro<-round.object
 
-# Calculate the 95% confidence interval
-alpha <- 0.05
-z <- qnorm(1 - alpha/2)  # Z-score for 95% confidence
 
-# Standard error
-se <- sqrt(p_hat * (1 - p_hat) / n)
-
-# Confidence interval
-lower_limit <- p_hat - z * se
-upper_limit <- p_hat + z * se
-
-# Round to 4 decimal places
-lower_limit <- round(lower_limit, 4)
-upper_limit <- round(upper_limit, 4)
-
-lower_limit
-upper_limit
+ro(poisson.test.onesample.simple(sample.count = 250 * 2.58
+                              ,sample.size = 250
+                              ,conf.level = 0.90),4)
 
 ```
 
 
-
-
-```{r}
-# Define the sample size and the average number of indications per bar
-n <- 250
-c_bar <- 2.58
-
-# Calculate the total number of indications
-lambda_hat <- n * c_bar
-
-# Calculate the chi-squared critical values
-chi2_lower <- qchisq(0.95, df = 2 * n)
-chi2_upper <- qchisq(0.05, df = 2 * n)
-
-# Calculate the lower and upper confidence limits for lambda
-lower_conf_limit_lambda <- lambda_hat / chi2_lower
-upper_conf_limit_lambda <- lambda_hat / chi2_upper
-
-# Round the results to four decimal places
-lower_conf_limit_lambda_rounded <- round(lower_conf_limit_lambda, 4)
-upper_conf_limit_lambda_rounded <- round(upper_conf_limit_lambda, 4)
-
-# Display the results
-lower_conf_limit_lambda_rounded
-upper_conf_limit_lambda_rounded
-
-```
 
 
 
