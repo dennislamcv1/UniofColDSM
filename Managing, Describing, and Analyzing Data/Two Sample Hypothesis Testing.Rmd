@@ -5,24 +5,25 @@ date: "2024-08-20"
 ---
 
 ```{r}
-# Parameters
-alpha <- 0.01
-n <- 20
-delta_mu <- 1
-sigma <- 2.0
+# Calculating Power
+# Startup Code
+require(lolcat)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
 
-# Calculate the effect size
-effect_size <- delta_mu / (sigma / sqrt(n))
 
-# Calculate power using the pwr library
-# Install the pwr package if you haven't already by running install.packages("pwr")
-library(pwr)
-power_result <- pwr.t.test(n = n, d = effect_size, sig.level = alpha, type = "one.sample", alternative = "two.sided")
+power.mean.t.onesample(sample.size = 20
+                       ,effect.size = 1
+                       ,variance.est = 2.0
+                       ,alpha = 0.01
+                       ,alternative = "two.sided")
 
-# Print the power rounded to 4 decimal places
-round(power_result$power, 4)
+
 
 ```
+
+
 
 ```{r}
 # Parameters
@@ -31,25 +32,26 @@ beta <- 0.05
 delta_mu <- 1
 sigma <- 2.0
 
-# Find the z-values for the significance level and power
-z_alpha <- qnorm(1 - alpha / 2)  # Two-tailed test
-z_beta <- qnorm(1 - beta)
 
-# Calculate the minimum sample size
-n <- ((z_alpha + z_beta) * sigma / delta_mu)^2
-
-# Round up to the next whole number
-ceiling(n)
+sample.size.mean.t.onesample(effect.size = 1
+                       ,variance.est = 2.0
+                       ,alpha = 0.01
+                       ,beta = 0.05
+                       ,alternative = "two.sided")
 
 ```
 
 
-
-
-
-
-
-
+```{r}
+# Use simple when all parameter estimates are given
+ro(t.test.twosample.independent.simple(sample.mean.g1 = 72
+                                    ,sample.variance.g1 = 15^2
+                                    ,sample.size.g1 = 12
+                                    ,sample.mean.g2 = 64
+                                    ,sample.variance.g2 = 19^2
+                                    ,sample.size.g2 = 15
+                                    ,conf.level = 0.95),6)
+```
 
 ```{r}
 # Step 1: Load the data
@@ -102,87 +104,100 @@ t_statistic
 ```
 
 ```{r}
-# Conduct a paired t-test
-result <- t.test(data$before, data$after, paired = TRUE)
-
-# Output the t-statistic and p-value
-t_statistic <- round(result$statistic, 4)
-p_value <- result$p.value
-
-# Print the results
-t_statistic
-p_value
+ro(t.test.twosample.dependent.simple.meandiff(sample.mean.g1 = 3671
+                                              ,sample.mean.g2 = 4228
+                                              ,sample.variance.g1 = 246^2
+                                              ,sample.variance.g2 = 182^2
+                                              ,sample.size = 100
+                                              ,rho.estimate = 0.78),4)
 
 ```
 
 ```{r}
-# Input data
-before <- c(0.016, 0.014, 0.008, 0.013, 0.019, 0.027, 0.017, 0.020, 0.017, 0.018,
-            0.016, 0.011, 0.019, 0.014, 0.023, 0.020, 0.019, 0.016, 0.017, 0.022)
 
-after <- c(0.009, 0.011, 0.006, 0.010, 0.014, 0.016, 0.010, 0.012, 0.013, 0.008,
-           0.007, 0.006, 0.010, 0.007, 0.011, 0.010, 0.015, 0.004, 0.008, 0.014)
+
+ro(variance.test.twosample.independent.simple(sample.variance.g1 = 15^2
+                                              ,sample.size.g1 = 12
+                                              ,sample.variance.g2 = 19^2
+                                              ,sample.size.g2 = 15),7)
+```
+
+
+```{r}
+data <- read.table("Temper.dat", header = TRUE)
+summary(data)
+View(data)
+str(data)
+
+```
+
+
+```{r}
+
 
 # Calculate the variances
-var_before <- var(before)
-var_after <- var(after)
+var_before <- var(data$before,)
+var_after <- var(data$after,)
 
-# Calculate the F-test statistic
-f_statistic <- var_before / var_after
+print(var_before,4)
 
-# Print the F-statistic rounded to 4 decimal places
-round(f_statistic, 4)
+print(var_after, 4)
+
+ro(variance.test.twosample.independent.simple(sample.variance.g1 =0.00001812
+                                              ,sample.size.g1 = 20
+                                              ,sample.variance.g2=0.00001068
+                                              ,sample.size.g2 = 20),7)
 
 ```
 
 ```{r}
-# Input data
-before <- c(0.016, 0.014, 0.008, 0.013, 0.019, 0.027, 0.017, 0.020, 0.017, 0.018,
-            0.016, 0.011, 0.019, 0.014, 0.023, 0.020, 0.019, 0.016, 0.017, 0.022)
-
-after <- c(0.009, 0.011, 0.006, 0.010, 0.014, 0.016, 0.010, 0.012, 0.013, 0.008,
-           0.007, 0.006, 0.010, 0.007, 0.011, 0.010, 0.015, 0.004, 0.008, 0.014)
-
-# Perform paired t-test
-t_test_result <- t.test(before, after, paired = TRUE)
-
-# Extract and print the t-test statistic rounded to 4 decimal places
-round(t_test_result$statistic, 4)
+ro(t.test.twosample.independent.simple(sample.mean.g1 = 0.01730
+                                       ,sample.variance.g1 = 0.00001812
+                                       ,sample.size.g1 = 20
+                                       ,sample.mean.g2 = 0.01005
+                                       ,sample.variance.g2 = 0.00001068
+                                       ,sample.size.g2 = 20
+                                       ,conf.level = 0.95),4)
 
 ```
 
 
 ```{r}
-p1 <- 0.054
-p2 <- 0.036
-n1 <- 500
-n2 <- 500
-
-# Pooled proportion
-p_pool <- (p1 * n1 + p2 * n2) / (n1 + n2)
-
-# Test statistic
-z <- (p1 - p2) / sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
-
-# p-value for the two-tailed test
-p_value <- 2 * pnorm(-abs(z))
-p_value
+proportion.test.twosample.exact.simple(sample.proportion.g1 = 0.054
+                                       ,sample.size.g1 = 500
+                                       ,sample.proportion.g2 = 0.036
+                                       ,sample.size.g2 = 500
+                                       ,conf.level = 0.95)
 
 ```
 
 ```{r}
-lambda1 <- 7.5
-lambda2 <- 10
-n1 <- 2
-n2 <- 1
+# McNemar's Test for Change - Dependent Proportions -----------------------
+# Contingency table format = ct<-(a,c,b,d)
+ct<-c(10,4,102,34)
 
-# Z-test statistic
-Z <- (lambda1 - lambda2) / sqrt((lambda1 / n1) + (lambda2 / n2))
+# Create Contingency Table
+(ct.new<-matrix(ct,nrow = 4
+                , dimnames = list("Status Before Buffing" = c("Accept", "Reject"),
+                                  "Status After Buffing" = c("Accept", "Reject"))))
 
-# p-value calculation
-p_value <- pnorm(Z)
-p_value
+# Perform McNemar's Test
+(mcnemar.out<-proportion.test.mcnemar.simple(b = 4, c = 56))
+
+mcnemar.test(ct.new)
 
 ```
 
+```{r}
+# Two Sample Independent Tests for Poisson Rates (Counts) -----------------
+
+
+
+poisson.test.twosample.simple(sample.count.g1 = 15
+                              ,sample.size.g1 = 2
+                              ,sample.count.g2 = 10
+                              ,sample.size.g2 = 1)
+
+
+```
 
