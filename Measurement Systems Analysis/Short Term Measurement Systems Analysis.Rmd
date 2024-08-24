@@ -1,0 +1,49 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-08-24"
+---
+
+```{r}
+# Load necessary libraries
+require(lolcat)
+require(dplyr)
+require(flextable)
+
+# Set options
+ro <- round.object
+nqtr <- function(x, d) { noquote(t(round.object(x, d))) }
+options(scipen = 999, digits = 10)
+options(show.signif.stars = FALSE)  # Turn off * to indicate significance
+
+# Load the data
+
+# Short Term MSA ----------------------------------------------------------
+Short.Term.Study.Data <- read.delim("Continuous ST R.dat")
+View(Short.Term.Study.Data)
+st<-Short.Term.Study.Data
+
+# Review structure of file ------------------------------------------------
+str(st)
+
+# Change to Factors -------------------------------------
+st$Part<-factor(st$Part)
+st$Operator<-factor(st$Operator
+                    ,labels = c("Op 1", "Op 2"))
+st$Trial <-factor(st$Trial, labels = c("Num 1","Num 2","Num 3","Num 4", "Num 5"))
+
+
+# Random Sequence Generator -----------------------------------------------
+sample.int(n = 25)
+
+
+```
+
+
+
+
+
+
+
+
+
