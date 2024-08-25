@@ -1,0 +1,134 @@
+---
+title: "Discrete Measurement Systems Analysis"
+output: html_document
+date: "2024-08-25"
+---
+
+```{r}
+# Startup Code
+require(lolcat)
+require(car)
+require(dplyr)
+require(flextable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+
+```{r}
+# Load the data
+data <- read.table('Kevin-Oscar.dat', header = TRUE)
+
+str(data)
+
+# Filter for GOOD assessments by both inspectors
+agreement_good <- subset(data, Kevin == 1 & Oscar == 1)
+
+# Count the number of agreements
+count_agreement_good <- nrow(agreement_good)
+print(paste("Number of specimens both Kevin and Oscar agreed were GOOD:", count_agreement_good))
+
+```
+
+```{r}
+# Assuming 'data' is your data frame
+N11 <- sum(data$Kevin == 1 & data$Oscar == 1)
+N22 <- sum(data$Kevin == 2 & data$Oscar == 2)
+N12 <- sum(data$Kevin == 1 & data$Oscar == 2)
+N21 <- sum(data$Kevin == 2 & data$Oscar == 1)
+
+# Total number of specimens
+N <- nrow(data)
+
+# Calculate proportions
+P_o <- (N11 + N22) / N
+P_Good_K <- (N11 + N12) / N
+P_Bad_K <- (N21 + N22) / N
+P_Good_O <- (N11 + N21) / N
+P_Bad_O <- (N12 + N22) / N
+
+# Calculate expected agreement by chance
+P_e <- (P_Good_K * P_Good_O) + (P_Bad_K * P_Bad_O)
+
+# Calculate Kappa
+kappa <- (P_o - P_e) / (1 - P_e)
+
+# Print the Kappa value rounded to 4 decimal places
+print(sprintf("Kappa: %.4f", kappa))
+
+```
+
+
+```{r}
+
+
+# Count the number of agreements and disagreements
+N11 <- sum(data$Kevin == 1 & data$Oscar == 1)
+N22 <- sum(data$Kevin == 2 & data$Oscar == 2)
+N12 <- sum(data$Kevin == 1 & data$Oscar == 2)
+N21 <- sum(data$Kevin == 2 & data$Oscar == 1)
+N <- nrow(data)
+
+# Calculate proportions
+P_o <- (N11 + N22) / N
+P_Good_K <- (N11 + N12) / N
+P_Bad_K <- (N21 + N22) / N
+P_Good_O <- (N11 + N21) / N
+P_Bad_O <- (N12 + N22) / N
+
+# Calculate expected agreement by chance
+P_e <- (P_Good_K * P_Good_O) + (P_Bad_K * P_Bad_O)
+
+# Calculate Kappa
+kappa <- (P_o - P_e) / (1 - P_e)
+
+# Calculate Standard Error of Kappa
+SE_kappa <- sqrt((P_o * (1 - P_o) - P_e * (1 - P_e)) / (N * (1 - P_e)^2))
+
+# Calculate the 95% Confidence Interval
+Z_score <- 1.96
+Lower_CI <- kappa - (Z_score * SE_kappa)
+
+# Print the lower confidence interval rounded to 4 decimal places
+print(sprintf("Lower 95%% CI for Kappa: %.4f", Lower_CI))
+
+```
+
+```{r}
+# Calculate expected agreement by chance
+P_e <- (P_Good_K * P_Good_O) + (P_Bad_K * P_Bad_O)
+
+# Calculate Kappa
+kappa <- (P_o - P_e) / (1 - P_e)
+
+# Calculate Standard Error of Kappa
+SE_kappa <- sqrt((P_o * (1 - P_o) - P_e * (1 - P_e)) / (N * (1 - P_e)^2))
+
+# Calculate the 95% Confidence Interval
+Z_score <- 1.96
+Upper_CI <- kappa + (Z_score * SE_kappa)
+
+# Print the upper confidence interval rounded to 4 decimal places
+print(sprintf("Upper 95%% CI for Kappa: %.4f", Upper_CI))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

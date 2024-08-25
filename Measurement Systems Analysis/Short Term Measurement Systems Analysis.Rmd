@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "STMSA"
 output: html_document
 date: "2024-08-24"
 ---
@@ -39,11 +39,136 @@ sample.int(n = 25)
 
 ```
 
+```{r}
+# Summary - Measurement Error should be normally distributed 
+# for most parts --------
+norm<-ro(summary.continuous(fx = Value~Part*Operator, data = st),3)
+norm<-norm[-c(4,5,6)]
+norm
+
+View(norm)
+
+# Part 7 failed the test
+```
+
+```{r}
+# Remove Part 7 from the dataset
+st <- st[which(st$Part != 7),]
+View(st)
+```
+
+
+```{r}
+# Split Data by Operator
+Op1<-st[which(st$Operator=="Op 1"),]
+Op1<-Op1[order(Op1$Part),]
+Op1
+
+Op2<-st[which(st$Operator=="Op 2"),]
+Op2<-Op2[order(Op2$Part),]
+Op2
+
+#Op3<-st[which(st$Operator=="Op 3"),]
+#Op3<-Op3[order(Op3$Part),]
+```
+
+
+
+```{r}
+# Operator 1 --------------------------------------------------------------
+op1.mean <- aggregate(
+  x = Op1$Value,
+  by = list(Op1$Part),
+  FUN = mean);op1.mean
+
+op1.sd <- aggregate(
+  x = Op1$Value,
+  by = list(Op1$Part),
+  FUN = sd);op1.sd
+
+op1.data<-cbind(op1.mean$x, op1.sd$x)
+op1.data<-as.data.frame(op1.data)
+names(op1.data)<-c("Mean", "Std_Dev")
+op1.data
+
+```
+
+```{r}
+# Pearson Product Moment Correlation Coefficient
+(r.op1 <- round(cor(x = op1.data$Mean
+                    , y = op1.data$Std_Dev), 3))
+
+# Perform linear regression
+op1.lm <- lm(Std_Dev ~ Mean, data = op1.data)
+
+# Extract the p-value from the regression summary
+summary_op1_lm <- summary(op1.lm)
+p_value <- summary_op1_lm$coefficients[2, 4]  # Extract the p-value for the slope (Mean)
+
+# Display the p-value to 4 decimal places
+p_value <- round(p_value, 4)
+p_value
 
 
 
 
 
+```
+
+```{r}
+# Operator 2 --------------------------------------------------------------
+op2.mean <- aggregate(
+  x = Op2$Value,
+  by = list(Op2$Part),
+  FUN = mean);op2.mean
+
+op2.sd <- aggregate(
+  x = Op2$Value,
+  by = list(Op2$Part),
+  FUN = sd);op2.sd
+
+op2.data<-cbind(op2.mean$x, op2.sd$x)
+op2.data<-as.data.frame(op2.data)
+names(op2.data)<-c("Mean", "Std_Dev")
+op2.data
+
+# Pearson Product Moment Correlation Coefficient
+(r.op2<-round(cor(x = op2.data$Mean
+                 ,y = op2.data$Std_Dev),3))
+
+
+# See if r is significantly different than zero
+cor.pearson.r.onesample(x = op2.data$Mean
+                       ,y = op2.data$Std_Dev)
+
+```
+
+
+
+
+
+```{r}
+require(dplyr)
+
+
+```
+
+```{r}
+# Perform the ANOVA for Gage R&R
+model <- aov(Value ~ Part + Operator + Error(Part:Operator), data = st)
+
+# Print the summary of the model to extract the variance components
+summary(model)
+
+
+```
+
+```{r}
+# Extract the variance components
+var_repeatability <- 0.01464
+var_reproducibility <- gaugeRR_result$reproducibility
+var_part <- 110.50282
+```
 
 
 
