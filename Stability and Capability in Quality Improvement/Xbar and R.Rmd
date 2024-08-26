@@ -2,89 +2,223 @@
 title: "Xbar and R / Xbar and S Charts / X and MR Charts Notebook"
 output: html_notebook
 ---
+
+### Problem 1
+
+### A craft brewer of beer purchases incoming raw material for certain materials which arrives in bags. The first critical characteristic that purchasing is concerned with is that the Bag Weight is in a state of statistical control, so that they can be assured of the stability of the product they are receiving. You have been provided with a data file titled BagWeight.dat, which contains the Bag Weight data for a particular supplier shipping a raw material to one of the craft breweries. Each time a shipment arrives (roughly each week), a random sample of 5 bags is pulled off the pallet and weighed. The file contains the results for 30 consecutive shipments.
+
+
 ```{r}
 
 # Startup Code
 require(lolcat)
 require(spc)
 
-
-
 # Load the data
-data <- read.table("BagWeight.dat", header = TRUE, sep = "\t")
+data <- read.delim("BagWeight.dat", header = TRUE)
 
-# Prepare the data for the SPC chart function
-# The function expects a "measure" column (weights) and a "sample" column (week number)
-xbar.r.column <- data.frame(
-  measure = data$Bag_Weight,
-  sample = data$Week
-)
+View(data)
 
-# Calculate the mean weight for each week (subgroup mean)
-weekly_means <- aggregate(Bag_Weight ~ Week, data, mean)
+str(data)
+```
 
-# Calculate the overall centerline for the X̅ chart (the average of the subgroup means)
+```{r}
+# Calculate the mean for each week
+weekly_means <- aggregate(Bag_Weight ~ Week, data = data, FUN = mean)
+
+# Calculate the overall mean of the weekly means (centerline for the X-bar chart)
 centerline_xbar <- mean(weekly_means$Bag_Weight)
 
-# Print the result rounded to 4 decimal places
-centerline_xbar <- round(centerline_xbar, 4)
-print(centerline_xbar)
-
-
+# Print the result
+cat("Centerline for X-bar chart: ", round(centerline_xbar, 4), "\n")
 ```
 
 ```{r}
+# Calculate the range (max - min) for each week
+weekly_ranges <- aggregate(Bag_Weight ~ Week, data = data, FUN = function(x) max(x) - min(x))
 
-# Calculate the range for each week
-weekly_ranges <- aggregate(Bag_Weight ~ Week, data, function(x) max(x) - min(x))
-
-# Calculate the overall centerline for the R chart (average of the ranges)
+# Calculate the overall average of the weekly ranges (centerline for the R-chart)
 centerline_r <- mean(weekly_ranges$Bag_Weight)
 
-# Print the centerline for the R chart rounded to 4 decimal places
-centerline_r <- round(centerline_r, 4)
-cat("Centerline for the R chart:", centerline_r, "\n")
+# Print the result
+cat("Centerline for R-chart: ", round(centerline_r, 4), "\n")
 
 ```
 
 ```{r}
-# Define the control chart factor A2 for a sample size of 5
+# Step 1: Calculate the centerline for the X-bar chart
+weekly_means <- aggregate(Bag_Weight ~ Week, data = data, FUN = mean)
+centerline_xbar <- mean(weekly_means$Bag_Weight)
+
+# Step 2: Calculate the centerline for the R-chart
+weekly_ranges <- aggregate(Bag_Weight ~ Week, data = data, FUN = function(x) max(x) - min(x))
+centerline_r <- mean(weekly_ranges$Bag_Weight)
+
+# Step 3: Define the A2 constant for a sample size of 5
 A2 <- 0.577
 
-# Calculate the UCL and LCL for the X̅ chart
-UCL_xbar <- centerline_xbar + (A2 * centerline_r)
-LCL_xbar <- centerline_xbar - (A2 * centerline_r)
+# Step 4: Calculate the UCL and LCL for the X-bar chart
+UCL_xbar <- centerline_xbar + A2 * centerline_r
+LCL_xbar <- centerline_xbar - A2 * centerline_r
 
-# Print the UCL and LCL for the X̅ chart rounded to 4 decimal places
-UCL_xbar <- round(UCL_xbar, 4)
-LCL_xbar <- round(LCL_xbar, 4)
-cat("Upper Control Limit for the X̅ chart:", UCL_xbar, "\n")
-cat("Lower Control Limit for the X̅ chart:", LCL_xbar, "\n")
+# Print the results
+cat("UCL for X-bar chart: ", round(UCL_xbar, 4), "\n")
+cat("LCL for X-bar chart: ", round(LCL_xbar, 4), "\n")
+```
 
-# Calculate the LCL for the R chart
-D3 <- 0  # For a sample size of 5, D3 is 0, indicating no LCL
-LCL_r <- D3 * centerline_r
+```{r}
+# Step 1: Calculate the centerline for the R-chart (mean of weekly ranges)
+weekly_ranges <- aggregate(Bag_Weight ~ Week, data = data, FUN = function(x) max(x) - min(x))
+centerline_r <- mean(weekly_ranges$Bag_Weight)
 
-# Print the LCL for the R chart (if it doesn't exist, it's NA)
-if (LCL_r == 0) {
-  cat("Lower Control Limit for the R chart: NA\n")
-} else {
-  LCL_r <- round(LCL_r, 4)
-  cat("Lower Control Limit for the R chart:", LCL_r, "\n")
+# Step 2: Define the D3 and D4 constants for a sample size of 5
+D3 <- 0      # No lower control limit
+D4 <- 2.114  # Upper control limit factor
+
+# Step 3: Calculate the UCL and LCL for the R-chart
+UCL_r <- D4 * centerline_r
+LCL_r <- D3 * centerline_r  # Since D3 is 0, LCL will be NA
+
+# Print the results
+cat("UCL for R-chart: ", round(UCL_r, 4), "\n")
+cat("LCL for R-chart: NA\n")  # Since LCL doesn't exist, it's NA
+```
+
+```{r}
+# Step 1: Calculate the centerline for the R-chart (mean of weekly ranges)
+weekly_ranges <- aggregate(Bag_Weight ~ Week, data = data, FUN = function(x) max(x) - min(x))
+centerline_r <- mean(weekly_ranges$Bag_Weight)
+
+# Step 2: Define the d2 constant for a sample size of 5
+d2 <- 2.326
+
+# Step 3: Calculate sigma (process standard deviation)
+sigma <- centerline_r / d2
+
+# Print the result
+cat("Estimated sigma: ", round(sigma, 4), "\n")
+```
+
+### Problem 2
+
+### An electronics manufacturer makes a touchpad unit for industrial controls applications. The touch pad sheet is prone to registration issues during screen process printing if it is off-size (i.e. too far off nominal), so the Sheared to Width characteristic is critical to their manufacturing process. Data generated through time by randomly sampling and measuring 8 individual sheets (so, n=8) from 31 multiple production lots (k=31) through time have been provided to you in a data file titled ShearedSheet.dat.
+
+```{r}
+# Load the required libraries
+library(lolcat)
+library(spc)
+
+# Load the data from the file
+data <- read.delim("ShearedSheet.dat", header = TRUE)
+
+str(data)
+
+colnames(data)
+```
+
+```{r}
+# Calculate the mean Width Deviation for each subgroup
+xbar <- aggregate(Width_Deviation ~ Subgroup, data = data, FUN = mean)
+
+# Calculate the centerline for the Xbar chart
+centerline <- mean(xbar$Width_Deviation)
+
+# Print the centerline rounded to four decimal places
+print(round(centerline, 4))
+```
+
+```{r}
+# Calculate the range (max - min) for each subgroup
+ranges <- aggregate(Width_Deviation ~ Subgroup, data = data, FUN = function(x) max(x) - min(x))
+
+# Calculate the centerline for the dispersion chart (average range)
+centerline_dispersion <- mean(ranges$Width_Deviation)
+
+# Print the centerline rounded to four decimal places
+print(round(centerline_dispersion, 4))
+
+```
+
+```{r}
+# Calculate the mean Width Deviation for each subgroup
+xbar <- aggregate(Width_Deviation ~ Subgroup, data = data, FUN = mean)
+
+# Calculate the centerline for the Xbar chart
+centerline_xbar <- mean(xbar$Width_Deviation)
+
+# Calculate the range (max - min) for each subgroup
+ranges <- aggregate(Width_Deviation ~ Subgroup, data = data, FUN = function(x) max(x) - min(x))
+
+# Calculate the centerline for the dispersion chart (average range)
+centerline_dispersion <- mean(ranges$Width_Deviation)
+
+# A2 constant for subgroup size n = 8
+A2 <- 0.373
+
+# Calculate UCL and LCL for the Xbar chart
+UCL <- centerline_xbar + A2 * centerline_dispersion
+LCL <- centerline_xbar - A2 * centerline_dispersion
+
+# Print UCL and LCL rounded to four decimal places
+print(paste("UCL:", round(UCL, 4)))
+print(paste("LCL:", round(LCL, 4)))
+```
+
+```{r}
+# Calculate the range (max - min) for each subgroup
+ranges <- aggregate(Width_Deviation ~ Subgroup, data = data, FUN = function(x) max(x) - min(x))
+
+# Calculate the centerline for the dispersion chart (average range)
+centerline_dispersion <- mean(ranges$Width_Deviation)
+
+# D4 and D3 constants for subgroup size n = 8
+D4 <- 1.864
+D3 <- 0.136
+
+# Calculate UCL and LCL for the Range chart
+UCL_R <- D4 * centerline_dispersion
+LCL_R <- D3 * centerline_dispersion
+
+# Print UCL and LCL rounded to four decimal places
+print(paste("UCL for Range chart:", round(UCL_R, 4)))
+
+# Check if LCL is valid or should be considered NA
+if (LCL_R < 0) {
+  LCL_R <- "NA"
 }
+
+print(paste("LCL for Range chart:", LCL_R))
+```
+
+### Problem 3
+# You are the manager of the Heat Treatment department at Metals
+# company. You have recently installed a new furnace, and have randomly measured the temperature in the rear zone of the furnace for 25 consecutive hours; which corresponds to two consecutive production lots. The data are in a file labeled Furnace.dat.
+
+```{r}
+# Load the required libraries
+library(lolcat)
+library(spc)
+
+# Load the data from the file
+data <- read.delim("Furnace.dat", header = TRUE)
+
+str(data)
+
+colnames(data)
 
 
 ```
 
 ```{r}
-# Create the X Bar and R Chart
-spc.chart.variables.mean.and.meanrange(
-  data = xbar.r.column$measure,
-  sample = xbar.r.column$sample,
-  chart1.main = "X̅ Chart",
-  chart2.main = "R Chart"
-)
-
+# Calculate the centerline (mean) for the X chart
+centerline <- mean(data$Furnace_Temperature)
+round(centerline, 4)
 
 ```
+
+
+
+
+
+
 

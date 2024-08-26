@@ -1,0 +1,134 @@
+---
+title: "Attribute / Discrete Control Charts"
+output: html_document
+date: "2024-08-26"
+---
+
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+```{r}
+# p Chart -----------------------------------------------------------------
+p.Chart <- read.delim("calls.dat")
+View(p.Chart)
+```
+
+
+```{r}
+# Create proportions column -----------------------------------------------
+p.Chart$prop<-p.Chart$dropped_calls/p.Chart$call_sample_size
+
+# Average proportion (centerline) -----------------------------------------
+mean(p.Chart$prop)
+```
+
+
+
+```{r}
+# Exact Binomial Limits ---------------------------------------------------
+ro(table.dist.binomial(n = 250, p = 0.1753),4)[1:20,]
+
+```
+
+
+```{r}
+# Create p chart ----------------------------------------------------------
+spc.p.chart<-spc.chart.attributes.proportion.p.binomialdistribution.simple(proportions = p.Chart$prop, sample.size = p.Chart$call_sample_size)
+
+```
+
+
+```{r}
+# Control Limits and Centerline -------------------------------------------
+(p.UCL<-unique(spc.p.chart$chart1.control.limits.ucl))
+(p.center<-unique(spc.p.chart$chart1.center.line))
+(p.LCL<-unique(spc.p.chart$chart1.control.limits.lcl))
+
+climits<-as.data.frame(c(p.UCL, p.center, p.LCL))
+names(climits)<-"Limits"
+rownames(climits)<-c("UCL", "Center", "LCL")
+formattable(climits)
+```
+
+
+```{r}
+
+# Filter the data for Period 1
+period_1_data <- subset(p.Chart, call_period == 1)
+
+# Calculate the total number of dropped calls and the total number of calls in Period 1
+total_dropped_calls_period_1 <- sum(period_1_data$dropped_calls)
+total_calls_period_1 <- sum(period_1_data$call_sample_size)
+
+# Calculate the proportion of dropped calls in Period 1
+proportion_dropped_calls_period_1 <- total_dropped_calls_period_1 / total_calls_period_1
+
+# Round the proportion to 4 decimal places
+proportion_dropped_calls_period_1_rounded <- round(proportion_dropped_calls_period_1, 4)
+
+# Print the rounded proportion
+proportion_dropped_calls_period_1_rounded
+```
+
+
+```{r}
+# Split data by Set -------------------------------------------------------
+p.set1<-subset(x = p.Chart, subset = p.Chart$Set==1)
+p.set2<-subset(x = p.Chart, subset = p.Chart$Set==2)
+
+
+# Proportion Chart by Set -------------------------------------------------
+spc.p.set1<-spc.chart.attributes.proportion.p.binomialdistribution.simple(proportions = p.set1$prop, sample.size = p.set1$n, chart1.main = "p Chart Before")
+spc.p.set2<-spc.chart.attributes.proportion.p.binomialdistribution.simple(proportions = p.set2$prop, sample.size = p.set2$n, chart1.main = "p Chart After")
+```
+
+
+
+
+```{r}
+
+
+# Filter the data for Period 1
+period_1_data <- subset(p.Chart, call_period == 1)
+
+# Calculate the proportion of dropped calls for each sample
+proportion_dropped_calls <- period_1_data$dropped_calls / period_1_data$call_sample_size
+
+# Calculate the mean proportion of dropped calls
+mean_proportion <- mean(proportion_dropped_calls)
+
+# Calculate the standard deviation of the proportion of dropped calls
+std_dev_proportion <- sd(proportion_dropped_calls)
+
+# Control Limits (assuming these are already calculated from spc.p.set1)
+p.UCL <- unique(spc.p.set1$chart1.control.limits.ucl)
+p.center <- unique(spc.p.set1$chart1.center.line)
+p.LCL <- unique(spc.p.set1$chart1.control.limits.lcl)
+
+# Assuming no explicit USL and LSL, calculate a Cpk equivalent:
+# Convert Z Score to Cpk_eq
+# Replace p-value with appropriate value if needed
+
+p_value <- 0.0171875  # Example p-value from your script
+Z <- qnorm(p = p_value, lower.tail = FALSE)
+Cpk_eq <- Z / 3
+
+# Round the Cpk_eq to 4 decimal places
+Cpk_eq_rounded <- round(Cpk_eq, 4)
+
+# Print the rounded Cpk_eq value
+Cpk_eq_rounded
+
+```
+
+
+
+
+
+
