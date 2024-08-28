@@ -1,0 +1,168 @@
+---
+title: "Non-Normally Distributed Data"
+output: html_document
+date: "2024-08-27"
+---
+
+### Question 1
+### Problem 1 - Lognormal Transformation
+
+# A manufacturer is producing 100 lb heavy punching bags for boxers and boxing enthusiasts. Bags are sampled randomly during production. Each bag is weighed, and the value recorded is X - T (X being the observed weight, T = Target = 100). The values recorded are the number of pounds away from the targeted label weight of 100 pounds (lbs). Positive values reflect bags that weigh more than 100 lbs; negative values reflect bags that weighed less than 100 lbs. (Data file is: BagWeightsDev.dat). You may assume that this data can be transformed with the lognormal transformation.
+
+```{r}
+# Startup Code
+require(lolcat)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+```{r}
+data <- read.delim("BagWeightsDev.dat", header=TRUE)
+
+```
+
+```{r}
+summary(data$Deviation)
+hist.grouped(data$Deviation, anchor.value = 5)
+```
+
+
+
+```{r}
+# Lognormal Transformation
+data$Transformed <- log(2 * abs(min(data$Deviation)) + data$Deviation)
+
+nqtr(summary.continuous(data$Transformed),5)
+
+hist.grouped(data$Transformed, anchor.value = 3.61, interval.size = 0.03, freq = F)
+
+```
+
+
+```{r}
+# Find the Upper Natural Process Limit and 
+# Lower Natural Process Limit on the transformed data
+natural.tolerance.normal(x = data$Transformed)
+data.ln<-natural.tolerance.normal(x = data$Transformed)
+(LNPL.ln<-data.ln$lower.limit)
+(UNPL.ln<-data.ln$upper.limit)
+```
+
+```{r}
+
+# Assuming `data$Transformed` is the column with your transformed data
+# and `min_deviation` is the minimum value of `Deviation` you used for the transformation
+min_deviation <- min(data$Deviation, na.rm = TRUE)  # Ensure to use the correct minimum value
+
+# Reverse the transformation
+# data$Original <- exp(data$Transformed) - 2 * abs(min_deviation)
+
+# Transform UNPL and LNPL back to original data
+(LNPL<-exp(LNPL.ln) - 2 * abs(min_deviation))
+(UNPL<-exp(UNPL.ln) - 2 * abs(min_deviation))
+```
+
+
+### Problem 2 - Exponential
+
+### You are now the store manager at Sephora. You’ve been hired to turn around the store and one of the key performance indicators related to sales has been determined to be “time to first greeting” when a customer enters the store. You have collected 100 random samples of times, and they are in the file named Store Greeting.dat. You may assume that the minimum value of the population is zero. 
+
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+
+library(qicharts2)
+
+```
+
+```{r}
+
+# Read the data as a numeric vector
+data <- read.csv("Store-Greeting.dat", header = TRUE)
+
+data
+
+```
+
+```{r}
+# Test for Exponentiality
+shapiro.wilk.exponentiality.test(x = data$Time)
+```
+```{r}
+# Plot I chart
+expchart = qic(data$Time, chart = 'i', show.labels = TRUE)
+
+expchart
+
+```
+
+```{r}
+summary(expchart)
+```
+
+
+
+
+```{r}
+# Generate 3 sigma chart limits for the X chart
+(nt.exp.low<-ro(natural.tolerance.exp.low(x = data$Time
+                                         ,low = min(data$Time)),5))
+
+(LNPL.exp.low<-nt.exp.low$lower.limit)
+(UNPL.exp.low<-nt.exp.low$upper.limit)
+formattable(nt.exp.low)
+```
+
+```{r}
+# Create chart to get control limits for the Individuals Chart
+exp.low<-spc.chart.variables.individual.and.movingrange.exponential.low.simple(individuals = data$Time
+                                                                               ,low = min(data$Time))
+cl<-ro(unique(data.frame(exp.low$chart1.control.limits.ucl
+                         ,exp.low$chart1.center.line
+                         ,exp.low$chart1.control.limits.lcl)),5)
+
+rownames(cl)<-"Control Limits"
+formattable(cl)
+t(cl)
+View(t(cl))
+```
+
+
+```{r}
+set.seed(100)  # Set seed for reproducibility
+
+# Calculate the moving ranges
+moving_ranges <- abs(diff(data))
+
+# Calculate the mean and standard deviation of the moving ranges
+mean_mr <- mean(moving_ranges)
+sd_mr <- sd(moving_ranges)
+
+# Perform Monte Carlo simulation to generate control limits
+simulated_mr <- replicate(10000, {
+  simulated_data <- rnorm(length(moving_ranges), mean = mean_mr, sd = sd_mr)
+  return(simulated_data)
+})
+
+# Calculate the 3 sigma limits from the simulated data
+UNPL_mr <- mean_mr + 3 * sd(simulated_mr)
+LNPL_mr <- mean_mr - 3 * sd(simulated_mr)
+
+# Print the results with the required precision
+ro(UNPL_mr, 4)  # Upper Natural Process Limit
+ro(LNPL_mr, 5)  # Lower Natural Process Limit
+
+```
+
+
+### Problem 3 - Fit Data
+
+### You are the manager of the Heat Treatment department at Metals company. The results of your previous analysis for the new furnace have made you start wondering about your second, older furnace. This furnace is used for different parts than furnace #1, so the nominal/target value for Rear Zone Temperature (RZT) in this furnace is 1.285, with a USL = 1.340 and a LSL = 1.230 (the data have been coded so that 1 = 1,000ºF).
+
+### At your request, your Quality Manager has compiled a data file (Furnace2.dat) containing data for the last 115 production lots manufactured. Each value represents a single RZT reading obtained randomly during the period of time that the particular lot was being processed.
+

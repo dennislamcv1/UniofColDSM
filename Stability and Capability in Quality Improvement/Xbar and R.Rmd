@@ -216,9 +216,76 @@ round(centerline, 4)
 
 ```
 
+```{r}
+# Calculate the moving ranges (absolute differences between consecutive temperatures)
+moving_ranges <- abs(diff(data$Furnace_Temperature))
+
+# Calculate the centerline (average of the moving ranges)
+centerline_moving_range <- mean(moving_ranges)
+
+# Print the centerline, rounded to 4 decimal places
+cat("Centerline for Moving Range Chart:", round(centerline_moving_range, 4), "\n")
+```
+
+```{r}
+# Calculate the centerline for the X-chart (mean of the data)
+CL_X <- mean(data$Furnace_Temperature)
+
+# Calculate the moving ranges (absolute differences between consecutive temperatures)
+moving_ranges <- abs(diff(data$Furnace_Temperature))
+
+# Calculate the average moving range
+average_moving_range <- mean(moving_ranges)
+
+# Calculate the standard error (average moving range divided by d2 for moving range size 2)
+d2 <- 1.128
+SE <- average_moving_range / d2
+
+# Calculate the upper and lower control limits for the X-chart
+UCL_X <- CL_X + 3 * SE
+LCL_X <- CL_X - 3 * SE
+
+# Print the UCL and LCL, rounded to 4 decimal places
+cat("Upper Control Limit for X-chart:", round(UCL_X, 4), "\n")
+cat("Lower Control Limit for X-chart:", round(LCL_X, 4), "\n")
+```
 
 
+```{r}
+# Calculate the moving ranges (absolute differences between consecutive temperatures)
+moving_ranges <- abs(diff(data$Furnace_Temperature))
 
+# Calculate the average moving range (centerline for the dispersion chart)
+average_moving_range <- mean(moving_ranges)
 
+# Constants for subgroup size of 2
+D3 <- 0
+D4 <- 3.267
+
+# Calculate the upper and lower control limits for the dispersion chart
+UCL_dispersion <- D4 * average_moving_range
+LCL_dispersion <- ifelse(D3 == 0, NA, D3 * average_moving_range)
+
+# Print the UCL and LCL, rounded to 4 decimal places
+cat("Upper Control Limit for Dispersion Chart:", round(UCL_dispersion, 4), "\n")
+cat("Lower Control Limit for Dispersion Chart:", LCL_dispersion, "\n")
+```
+
+```{r}
+# Calculate the moving ranges (absolute differences between consecutive temperatures)
+moving_ranges <- abs(diff(data$Furnace_Temperature))
+
+# Calculate the average moving range (centerline for the dispersion chart)
+average_moving_range <- mean(moving_ranges)
+
+# d2 constant for subgroup size of 2
+d2 <- 1.128
+
+# Estimate sigma
+sigma <- average_moving_range / d2
+
+# Print the estimated sigma, rounded to 4 decimal places
+cat("Estimate for sigma:", round(sigma, 4), "\n")
+```
 
 
