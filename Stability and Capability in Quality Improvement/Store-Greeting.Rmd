@@ -1,0 +1,165 @@
+---
+title: "storegreeting"
+output: html_document
+date: "2024-09-21"
+---
+
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+```{r}
+store <- read.csv("Store-Greeting.dat", sep="")
+View(store)
+```
+
+# Make chart first
+
+```{r}
+spc.chart.variables.individual.and.movingrange.normal.simple(store$Time)
+```
+
+```{r}
+# Test for shape - include minimum value for Greeting
+nqtr(summary.continuous(store$Time, stat.min=T),4)
+```
+
+```{r}
+# Histogram
+hist.grouped(store$Time, ylim = c(0,0.55), main = "Store Greeting", freq=F)
+hist.add.distribution.curve.exp.low(x = store$Time, low = min(store$Time), freq = F)
+```
+
+```{r}
+# Test for Exponentiality
+shapiro.wilk.exponentiality.test(x = store$Time)
+```
+
+
+```{r}
+# Generate 3 sigma chart limits for the I chart
+(nt.exp <- ro(natural.tolerance.exp(x = store$Time),4))
+
+(LNPL.exp<-nt.exp$lower.limit)
+(UNPL.exp<-nt.exp$upper.limit)
+formattable(nt.exp)
+
+
+
+```
+
+```{r}
+# 2nd Method (Wrong Answer Given)
+# Create chart to get control limits for the Individuals Chart
+exp.low<-spc.chart.variables.individual.and.movingrange.exponential.low.simple(individuals = store$Time                                                       ,low = min(store))
+
+cl<-ro(unique(data.frame(exp.low$chart1.control.limits.ucl
+                         ,exp.low$chart1.center.line
+                         ,exp.low$chart1.control.limits.lcl)),4)
+
+rownames(cl)<-"Control Limits"
+formattable(cl)
+t(cl)
+View(t(cl))
+```
+
+# With respect to the moving range, use a Monte Carlo Simulation based on the underlying population distribution you determined from the individuals to generate the appropriate control limits. Using this approach, set the seed to 100 prior to the simulation.
+
+```{r}
+mean(store$Time)
+```
+
+
+```{r}
+# Set the seed for reproducibility
+set.seed(100)
+```
+
+
+
+```{r}
+# Exponential Moving Range Chart
+# Monte Carlo Simulation
+
+# Generate 100000 samples from the exponential distribution
+n_samples <- 100000
+mc <- rexp(n_samples, rate=1/2.0315)
+
+
+mc[1:5]
+
+```
+
+
+```{r}
+# Calculate Moving Range from simulated distribution
+mr.exp.low<- c(abs(diff(mc)))
+mr.exp.low[1:5]
+```
+
+```{r}
+# Calculate descriptive statistics
+nqtr(summary.continuous(mr.exp.low, stat.min=T),4)
+hist.grouped(mr.exp.low, main = "Histogram of Moving Ranges")
+```
+
+
+```{r}
+# Test for exponentiality
+shapetest.exp.epps.pulley.1986(mr.exp.low)
+```
+
+
+
+```{r}
+# Calculate natural tolerance
+(nt.mr.exp   <-ro(natural.tolerance.exp(x = mr.exp.low),5))
+(LNPL.mr.exp <-nt.mr.exp$lower.limit)
+(UNPL.mr.exp <-nt.mr.exp$upper.limit)
+
+```
+
+```{r}
+hist.grouped(mr.exp.low
+             ,main = "Histogram of Moving Ranges"
+             ,xlim = c(0,10)
+             ,anchor.value = 0
+             ,interval.size = 0.1
+             ,stat.lsl = LNPL.mr.exp
+             ,stat.lsl.label = "LNPL"
+             ,stat.usl = UNPL.mr.exp
+             ,stat.usl.label = "UNPL"
+             ,freq = F)
+```
+
+```{r}
+# Create chart using the generic control chart
+exp.low<-spc.chart.variables.individual.and.movingrange.generic.simple(individuals = store$Time
+                                                                       ,chart1.control.limits.lcl = LNPL.exp.low
+                                                                       ,chart1.center.line = mean(store$Time)
+                                                                       ,chart1.control.limits.ucl = UNPL.exp.low
+                                                                       ,chart2.control.limits.lcl = LNPL.mr.exp
+                                                                       ,chart2.center.line = mean(mr.exp.low)
+                                                                       ,chart2.control.limits.ucl = UNPL.mr.exp)
+```
+
+```{r}
+# Changing rules
+rules <- spc.rulesets.nelson.1984.test.1.2.3.4()
+```
+
+```{r}
+# Turn off the lower control limit rule
+rules$outside.limits <- spc.controlviolation.nelson.1984.test1.outside.zone.a.upper
+```
+
+```{r}
+
+```
+
+
