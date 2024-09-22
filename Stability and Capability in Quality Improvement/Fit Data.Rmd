@@ -1,0 +1,160 @@
+---
+title: "Fit Data"
+output: html_document
+date: "2024-09-21"
+---
+
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+require(fitdistrplus) # For distribution fitting
+require(SuppDists) # For Johnson distribution
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+```{r}
+# **** Distribution Fitting ****
+furnace2 <- read.csv("Furnace2.dat", sep="")
+View(furnace2)
+```
+
+
+```{r}
+# Get parameters for gamma fit for the individuals
+data<-furnace2$RZT
+data
+```
+
+```{r}
+# Get starting parameters for gamma distribution using moment estimation
+start.gamma<-mmedist(data = data, distr = "gamma") 
+start.gamma$estimate
+```
+
+```{r}
+# Create a named list for starting parameters
+start<-as.list(start.gamma$estimate)
+start
+```
+
+
+```{r}
+# Goodness of fit for the Gamma
+(fit.g<-fitdist(data = furnace2$RZT, distr = "gamma", start = start))
+```
+
+```{r}
+# Goodness of fit statistics
+(gof.out<-gofstat(fit.g, fitnames = c("Gamma")))
+```
+
+
+```{r}
+# Goodness of fit p values
+(chisquare.out<-gof.out$chisqpvalue)
+(ad.out<-gof.out$adtest)
+(aic.out<-gof.out$aic) # Lower is best - Akaike information criterion
+```
+
+```{r}
+# Calculate the Natural Tolerance for the Gamma Distribution
+# Goodness of fit for the Gamma
+(fit.g<-fitdist(data = furnace2$RZT, distr = "gamma", start = start))
+(shape<-fit.g$estimate[1])
+(rate<-fit.g$estimate[2])
+```
+
+```{r}
+# Get natural tolerance of Gamma distribution
+p<-0.3174986
+lower.tail<-FALSE 
+f<-function(p,lower.tail) 
+{qgamma(p, shape = shape, rate = rate, lower.tail = lower.tail)
+} 
+(nt.gamma<-natural.tolerance(f))
+(LNPL.gamma<-nt.gamma$lower.limit)
+(UNPL.gamma<-nt.gamma$upper.limit)
+```
+
+```{r}
+# Do these limits make sense?
+hist.grouped(furnace2$RZT
+             ,stat.lsl = LNPL.gamma
+             ,stat.lsl.label = "LNPL"
+             ,stat.usl = UNPL.gamma
+             ,stat.usl.label = "UNPL"
+             ,xlim = c(1.0,1.5)
+             ,anchor.value = 0
+             ,main = "Gamma Distribution"
+             ,freq = F)
+plot(function(x)dgamma(x = x, shape = shape, rate = rate),-0.5,8, add=TRUE)
+```
+```{r}
+# Make Chart with Gamma Distribution for the individuals
+spc.map<-spc.chart.variables.individual.and.movingrange.generic.simple(individuals = furnace2$RZT
+                                                                       ,chart1.center.line = median(furnace2$RZT)
+                                                                       ,chart1.control.limits.lcl = LNPL.gamma
+                                                                       ,chart1.control.limits.ucl = UNPL.gamma)
+```
+
+```{r}
+# Assuming furnace2$RZT is your dataset
+
+# 1. Calculate the Moving Range (MR)
+moving_range <- abs(diff(furnace2$RZT))
+
+# 2. Fit a Gamma distribution to the moving range values
+# Use moment estimation to get starting parameters for the gamma distribution
+start_mr_gamma <- mmedist(data = moving_range, distr = "gamma")
+
+# Extract starting parameters
+start_mr <- as.list(start_mr_gamma$estimate)
+
+# 3. Fit the Gamma distribution using the starting parameters
+fit_mr_gamma <- fitdist(data = moving_range, distr = "gamma", start = start_mr)
+
+fit_mr_gamma
+
+# 4. Extract the shape parameter for the moving range fit
+shape_mr <- fit_mr_gamma$estimate[1]
+
+# Display the shape parameter to 4 decimal places
+round(shape_mr, 4)
+
+```
+
+```{r}
+# 4. Extract the rate parameter for the moving range fit
+rate_mr <- fit_mr_gamma$estimate[2]
+
+# Display the rate parameter to 4 decimal places
+round(rate_mr, 4)
+```
+
+```{r}
+# Assuming furnace2$RZT is your dataset and fit_mr_gamma contains the gamma fit for moving ranges
+
+# 1. Extract the shape and rate parameters from the moving range gamma fit
+shape_mr <- fit_mr_gamma$estimate[1]
+rate_mr <- fit_mr_gamma$estimate[2]
+
+# 2. Calculate the Lower Natural Process Limit (LNPL) and Upper Natural Process Limit (UNPL)
+# Natural process limits for 3-sigma (99.73%)
+# LNPL corresponds to the 0.00135 quantile (lower bound)
+# UNPL corresponds to the 0.99865 quantile (upper bound)
+
+LNPL_mr <- qgamma(p = 0.00135, shape = shape_mr, rate = rate_mr)
+UNPL_mr <- qgamma(p = 0.99865, shape = shape_mr, rate = rate_mr)
+
+# Display the limits rounded to 4 decimal places
+round(LNPL_mr, 4)
+round(UNPL_mr, 4)
+
+```
+
+
+
+
