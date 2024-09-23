@@ -1,0 +1,81 @@
+---
+title: "Process Capability BagWeight"
+output: html_document
+date: "2024-09-22"
+---
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999, digits=7)
+```
+
+```{r}
+# Assessing Capability Xbar and R -----------------------------------------
+# Import data file
+bag <- read.delim("BagWeight.dat")
+View(bag)
+```
+
+
+```{r}
+# Descriptive Statistics and Histogram ------------------------------------
+nqtr(summary.continuous(bag$Bag_Weight),5)
+hist.grouped(bag$Bag_Weight
+             ,stat.lsl = 108
+             ,stat.usl = 112
+             ,stat.target = 110
+             ,main = "Histogram of Bag Weight"
+             ,freq = F)
+hist.add.distribution.curve.normal(bag$Bag_Weight, freq=F, lwd = 2)
+```
+
+
+```{r}
+# Xbar and R Control Chart ------------------------------------------------
+spcxbar.r<-spc.chart.variables.mean.and.meanrange(data = bag$Bag_Weight
+                                                ,sample = bag$Week
+                                                ,stat.lsl = 108
+                                                ,stat.target = 110
+                                                ,stat.usl = 112
+                                                ,chart1.main = "Mean Chart - Diameter"
+                                                ,chart2.main = "Range Chart")
+```
+
+```{r}
+# Calculate estimate of sigma from control chart
+(rbar<-unique(spcxbar.r$chart2.center.line))
+(d2<-spc.constant.calculation.d2(5))
+(sig_est<-rbar/d2)
+```
+
+```{r}
+#  **** Capability and Performance Indices **** ---------------------------
+cap.xbar.r<-ro(spcxbar.r$capability,5)
+formattable(cap.xbar.r)
+```
+
+```{r}
+# Step 1: Define the process mean (already calculated)
+mean_weight <- mean(bag$Bag_Weight)
+
+# Step 2: Define the specification limits
+USL <- 112  # Upper Specification Limit
+LSL <- 108  # Lower Specification Limit
+
+# Step 3: Calculate the proportion above the USL and below the LSL using normal distribution CDF
+p_above_usl <- 1 - pnorm(USL, mean = mean_weight, sd = sig_est)  # Proportion above USL
+p_below_lsl <- pnorm(LSL, mean = mean_weight, sd = sig_est)      # Proportion below LSL
+
+# Step 4: Calculate the total proportion outside the specification limits
+total_outside <- (p_above_usl + p_below_lsl) * 100  # Convert to percentage
+
+# Step 5: Print the result formatted to 4 decimal places
+cat(sprintf("%.4f", total_outside))
+
+```
+
+
+

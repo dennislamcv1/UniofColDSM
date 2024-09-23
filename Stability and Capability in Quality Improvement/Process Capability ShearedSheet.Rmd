@@ -1,0 +1,169 @@
+---
+title: "Process Capability ShearedSheet"
+output: html_document
+date: "2024-09-22"
+---
+
+
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+```{r}
+# *** Load Data ***
+sheet <- read.csv("ShearedSheet.dat", sep="")
+View(sheet)
+
+```
+
+```{r}
+# Descriptive Statistics and Histogram ------------------------------------
+nqtr(summary.continuous(sheet$Width_Deviation, stat.min=T), 5)
+```
+
+
+```{r}
+summary(sheet$Width_Deviation)
+```
+
+```{r}
+### Draw Exp Curve and Histogram - Correct
+
+
+hist.grouped(sheet$Width_Deviation
+             ,xlim=c(min(sheet$Width_Deviation)-1,max(sheet$Width_Deviation))
+             ,ylim=c(0,1)
+             ,anchor.value = min(sheet$Width_Deviation)
+             ,stat.target = 0
+             ,stat.usl = 7
+             ,main = "Sheet"
+             ,freq=F)
+hist.add.distribution.curve.exp.low(x = sheet$Width_Deviation
+                                    ,low = min(sheet$Width_Deviation)
+                                    ,lwd=2
+                                    ,freq = F)
+```
+
+
+```{r}
+# Exponential Test ------------------------------------------------
+shapiro.wilk.exponentiality.test(x = sheet$Width_Deviation)
+```
+
+```{r}
+# Alternative Approach: Kolmogorov-Smirnov Test
+ks.test(sheet$Width_Deviation, "pexp", rate=1/mean(sheet$Width_Deviation))
+
+```
+
+```{r}
+# Alternative Approach: Anderson-Darling Test
+
+library(nortest)
+ad.test(sheet$Width_Deviation)
+
+```
+
+```{r}
+require(ADGofTest)
+#ad.test(sheet$Width_Deviation, null="pexp", rate=1/mean(sheet$Width_Deviation))
+
+```
+
+
+
+```{r}
+# Capability Assessment -------------------------------------
+# Now we can evaluate capability
+data<-sheet$Width_Deviation
+data
+```
+
+```{r}
+# Define function for natural tolerance -----------------------------------
+# Get natural tolerance for Exponential Low Distribution for the individual values
+nt.exp.low<-natural.tolerance.exp.low(x = sheet$Width_Deviation,low = min(sheet$Width_Deviation))
+
+nt.exp.low
+
+ro(formattable(nt.exp.low),4)
+
+```
+
+```{r}
+# Define inputs -----------------------------------------------------------
+LSL       <- NA
+Target    <- 0
+USL       <- 7
+#l.out    <- pexp.low(q = LSL, low = min(data), mean = mean(data), lower.tail = T)
+u.out     <- pexp.low(q = USL, low = min(data), mean = mean(data), lower.tail = F)
+total.out <- u.out
+median    <- median(data)
+mean      <- mean(data)
+nt_est    <- nt.exp.low$natural.tolerance
+s         <- sd(data)
+obs.above.spec <- sum(data > USL)
+#obs.below.spec <- sum(data < LSL)
+totaln         <- length(data)
+
+```
+
+```{r}
+# Capability and Performance Indices --------------------------------------
+cap.exp<-spc.capability.summary.ungrouped.nonnormal.simple.R(stat.lsl = LSL
+                                                    ,stat.target = Target
+                                                    ,stat.usl = USL
+                                                    ,process.center.capability = median
+                                                    ,process.center.performance = mean
+                                                    ,process.variability = s^2
+                                                    ,process.n.upper = obs.above.spec
+                                                    
+                                                    ,process.n       = totaln
+                                                    ,natural.tolerance = nt_est
+                                                    
+                                                    ,p.upper           = u.out)
+
+ro(cap.exp,4)
+
+ro(formattable(cap.exp),4)
+```
+
+```{r}
+# Define parameters
+USL <- 7
+Target <- 0
+mean <- mean(data)  # or use the mean you calculated earlier
+s <- sd(data)  # Standard deviation
+
+# Cp calculation
+Cp <- USL / (6 * s)
+
+# Cpk calculation
+Cpk <- (USL - mean) / (3 * s)
+
+# Cpm calculation
+Cpm <- USL / (6 * sqrt(s^2 + (mean - Target)^2))
+
+# Display results
+cat("Cp =", Cp, "\nCpk =", Cpk, "\nCpm =", Cpm)
+
+```
+
+
+```{r}
+spc.capability.cp.simple(lower.specification = NA, upper.specification = 7, 
+                         process.center = median(data), process.natural.tolerance = 8.1769)
+```
+
+```{r}
+spc.capability.cpk.simple(lower.specification = NA, upper.specification = 7, 
+                          process.variability = s^2, process.center = median(data))
+```
+
+
+
