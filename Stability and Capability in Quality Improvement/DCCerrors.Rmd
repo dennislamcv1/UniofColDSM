@@ -116,26 +116,14 @@ mean_data2
 var_data2
 ```
 
-```{r}
-library(AER)
-
-# Fit a Poisson GLM model
-poisson_model <- glm(defects ~ 1, family = poisson, data = c.set1)
-
-# Perform the dispersion test
-dispersion_test <- dispersiontest(poisson_model)
-
-# Print the test results
-print(dispersion_test)
-
-```
 
 ```{r}
 # Calculate the total number of defects in Period 1
 total_defects_period1 <- sum(c.set1$defects)
 
 # Calculate the total number of assemblies in Period 1
-total_assemblies_period1 <- nrow(c.set1) * 5  # Since each sample consists of 5 assemblies
+total_assemblies_period1 <-  25  # Since each sample consists of 5 assemblies
+
 
 # Calculate the assembly error rate for Period 1
 assembly_error_rate_period1 <- total_defects_period1 / total_assemblies_period1
@@ -146,77 +134,38 @@ print(assembly_error_rate_period1_rounded)
 
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```{r}
-# Calculate observed frequency
-observed_frequency <- table(c.set1$defects)
-print(observed_frequency)
+# Calculate the total number of defects in Period 2
+total_defects_period2 <- sum(c.set2$defects)
 
-```
+# Calculate the total number of assemblies in Period 1
+total_assemblies_period2 <- 25  # Since each sample consists of 5 assemblies
 
 
-```{r}
-# Calculate lambda (mean of defects in period 1)
-lambda <- mean(c.set1$defects)
-print(lambda)
+# Calculate the assembly error rate for Period 1
+assembly_error_rate_period2 <- total_defects_period2 / total_assemblies_period2
 
+# Print the assembly error rate rounded to 4 decimal places
+assembly_error_rate_period2_rounded <- round(assembly_error_rate_period2, 4)
+print(assembly_error_rate_period2_rounded)
 ```
 
 ```{r}
-# Calculate expected frequency using Poisson distribution
-expected_frequency <- dpois(as.numeric(names(observed_frequency)), lambda) * length(c.set1$defects)
-print(expected_frequency)
+# Calculate the total number of defects in Period 2
+total_defects_period2 <- sum(c.set2$defects)
+
+# Calculate the total number of assemblies in Period 2
+total_assemblies_period2 <- nrow(c.set2) * 5
+
+# Calculate the mean number of defects per group of 5 assemblies in Period 2
+mean_defects_period2 <- total_defects_period2 / nrow(c.set2)
+
+# Use the Poisson distribution to calculate the probability of observing 11 or more defects
+prob_11_or_more <- ppois(10, lambda = mean_defects_period2, lower.tail = FALSE)
+
+# Convert the probability to a percentage and round to 4 decimal places
+percentage_11_or_more <- round(prob_11_or_more * 100, 4)
+print(percentage_11_or_more)
 
 ```
-
-```{r}
-# Perform chi-square goodness-of-fit test
-chisq_test <- chisq.test(observed_frequency, p = expected_frequency / sum(expected_frequency))
-print(chisq_test)
-chisq_test$p.value
-
-```
-
-```{r}
-### Set 2 defects
-
-# Step 1: Calculate the Observed Frequency
-observed_frequency <- table(c.set2$defects)
-print(observed_frequency)
-
-# Step 2: Calculate lambda (mean of defects in period 2)
-lambda <- mean(c.set2$defects)
-print(lambda)
-
-# Calculate expected frequency using Poisson distribution
-expected_frequency <- dpois(as.numeric(names(observed_frequency)), lambda) * length(c.set2$defects)
-print(expected_frequency)
-
-# Step 3: Perform chi-square goodness-of-fit test
-chisq_test <- chisq.test(observed_frequency, p = expected_frequency / sum(expected_frequency))
-print(chisq_test)
-chisq_test$p.value
-
-```
-
 
