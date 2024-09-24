@@ -1,0 +1,136 @@
+---
+title: "Process Capability Furnace"
+output: html_document
+date: "2024-09-23"
+---
+
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+require(fitdistrplus) # For distribution fitting
+require(SuppDists) # For Johnson distribution
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+
+```{r}
+# **** Distribution Fitting ****
+furnace <- read.csv("Furnace2.dat", sep="")
+View(furnace)
+```
+
+```{r}
+# Descriptive Statistics and Histogram ------------------------------------
+nqtr(summary.continuous(furnace$RZT, stat.min=T),5)
+hist.grouped(furnace$RZT
+             ,stat.lsl = 1.230
+             ,stat.target = 1.285
+             ,stat.usl = 1.340
+             , freq=F)
+
+```
+
+
+```{r}
+# Capability Assessment -------------------------------------
+# Now we can evaluate capability
+data<-furnace$RZT
+```
+
+
+```{r}
+# Define function for natural tolerance -----------------------------------
+# Goodness of fit for the Gamma
+(fit.g<-fitdist(data = furnace$RZT, distr = "gamma"))
+(shape<-fit.g$estimate[1])
+(rate<-fit.g$estimate[2])
+```
+
+
+```{r}
+p<-.00135 
+lower.tail<-FALSE 
+f<-function(p,lower.tail) 
+{qgamma(p, shape = shape, rate = rate, lower.tail = lower.tail)
+} 
+(nt.gamma<-natural.tolerance(f))
+```
+
+
+```{r}
+# Define inputs -----------------------------------------------------------
+LSL       <- 1.230
+Target    <- 1.285
+USL       <- 1.340
+l.out     <- pgamma(q = LSL, shape = shape, rate = rate, lower.tail = T)
+u.out     <- pgamma(q = USL, shape = shape, rate = rate, lower.tail = F)
+total.out <- l.out + u.out
+median    <- median(data)
+mean      <- mean(data)
+nt_est    <- nt.gamma$natural.tolerance
+s         <- sd(data)
+obs.above.spec <- sum(data > USL)
+obs.below.spec <- sum(data < LSL)
+totaln         <- length(data)
+```
+
+
+```{r}
+# Capability and Performance Indices --------------------------------------
+cap.gamma<-spc.capability.summary.ungrouped.nonnormal.simple.R(stat.lsl = LSL
+                                                    ,stat.target = Target
+                                                    ,stat.usl = USL
+                                                    ,process.center.capability = median
+                                                    ,process.center.performance = mean
+                                                    ,process.variability = s^2
+                                                    ,process.n.upper = obs.above.spec
+                                                    ,process.n.lower = obs.below.spec
+                                                    ,process.n       = totaln
+                                                    ,natural.tolerance = nt_est
+                                                    ,p.lower           = l.out
+                                                    ,p.upper           = u.out)
+ro(formattable(cap.gamma),4)
+
+```
+
+```{r}
+#What is the total percentage you predict to be outside of both the upper and lower specification limit? Express this value as a percentage, and record your answer to 4 places after the decimal point. Do not include the % sign.
+
+71070/10000
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Step 1: Define the process mean (already calculated)
+mean_weight <- mean(furnace$RZT)
+
+# Step 2: Define the specification limits
+USL <- 1.340  # Upper Specification Limit
+LSL <- 1.230  # Lower Specification Limit
+
+# Step 3: Calculate the proportion above the USL and below the LSL using normal distribution CDF
+p_above_usl <- 1 - pnorm(USL, mean = mean_weight, sd = sig_est)  # Proportion above USL
+p_below_lsl <- pnorm(LSL, mean = mean_weight, sd = sig_est)      # Proportion below LSL
+
+# Step 4: Calculate the total proportion outside the specification limits
+total_outside <- (p_above_usl + p_below_lsl) * 100  # Convert to percentage
+
+# Step 5: Print the result formatted to 4 decimal places
+cat(sprintf("%.4f", total_outside))
+```
+
+

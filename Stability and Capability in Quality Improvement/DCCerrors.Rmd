@@ -1,0 +1,222 @@
+---
+title: "DCCchartserrors"
+output: html_document
+date: "2024-09-23"
+---
+
+```{r}
+# Startup Code
+require(lolcat)
+require(MASS)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+```{r}
+# C Chart -----------------------------------------------------------------
+c.Chart <- read.delim("errors.dat")
+View(c.Chart)
+```
+
+```{r}
+str(c.Chart)
+```
+
+
+
+```{r}
+# Draw c chart
+
+spc.c.chart<-spc.chart.attributes.counts.c.poissondistribution.simple(
+                                                counts = c.Chart$defects                                                             ,chart1.point.cex = 1.3                                                             ,chart1.line.lwd=2
+                                                 ,chart1.main = "c chart - Defects")
+```
+
+```{r}
+# Control Limits and Centerline
+unique(spc.c.chart$chart1.center.line)
+
+```
+
+```{r}
+# Poisson Table (Put Centreline as lambda) -----------------------------
+ro(table.dist.poisson(lambda = 12.12)[1:25,],4)
+```
+
+```{r}
+# Control Limits and Centerline ( The whole data )----------------------
+(c.UCL<-unique(spc.c.chart$chart1.control.limits.ucl))
+(c.center<-unique(spc.c.chart$chart1.center.line))
+(c.LCL<-unique(spc.c.chart$chart1.control.limits.lcl))
+```
+
+```{r}
+# Control Charts by Set ---------------------------------------------------
+# Split data by Set
+c.set1<-subset(x = c.Chart, subset = c.Chart$period==1)
+c.set2<-subset(x = c.Chart, subset = c.Chart$period==2)
+
+str(c.set1)
+
+str(c.set2)
+```
+
+```{r}
+# Chart both side by side
+par(mfrow=c(1,2))
+spc.c.set1<-spc.chart.attributes.counts.c.poissondistribution.simple(counts = c.set1$defects, combine.charts="leave.par.alone", chart1.ylim=c(0,30), chart1.main = "C Chart - Period 1")
+spc.c.set2<-spc.chart.attributes.counts.c.poissondistribution.simple(counts = c.set2$defects, combine.charts="leave.par.alone", chart1.ylim=c(0,30), chart1.main = "C Chart - Period 2")
+par(mfrow=c(1,1))
+```
+
+
+```{r}
+# Pull out information
+(set1.c.ucl<-unique(spc.c.set1$chart1.control.limits.ucl))
+(set1.c.center<-unique(spc.c.set1$chart1.center.line))
+(set1.c.lcl<-unique(spc.c.set1$chart1.control.limits.lcl))
+
+(set2.c.ucl<-unique(spc.c.set2$chart1.control.limits.ucl))
+(set2.c.center<-unique(spc.c.set2$chart1.center.line))
+(set2.c.lcl<-unique(spc.c.set2$chart1.control.limits.lcl))
+```
+
+```{r}
+# Generating sample data (replace with actual data)
+data <- rpois(c.set1$defects, lambda = 16.32)
+
+# Plotting the histogram
+hist(data, breaks = 10, col = 'lightblue', main = 'Histogram of Period 1', 
+     xlab = 'Number of Events', ylab = 'Frequency')
+```
+```{r}
+# Generating sample data (replace with actual data)
+data <- rpois(c.set2$defects, lambda = 7.92)
+
+# Plotting the histogram
+hist(data, breaks = 10, col = 'lightblue', main = 'Histogram of Period 2', 
+     xlab = 'Number of Events', ylab = 'Frequency')
+```
+
+```{r}
+
+# For a dataset following a Poisson distribution, the mean should be approximately equal to the variance.
+
+mean_data1 <- mean(c.set1$defects)
+var_data1 <- var(c.set1$defects)
+
+mean_data2 <- mean(c.set2$defects)
+var_data2 <- var(c.set2$defects)
+
+mean_data1
+var_data1
+
+mean_data2
+var_data2
+```
+
+```{r}
+library(AER)
+
+# Fit a Poisson GLM model
+poisson_model <- glm(defects ~ 1, family = poisson, data = c.set1)
+
+# Perform the dispersion test
+dispersion_test <- dispersiontest(poisson_model)
+
+# Print the test results
+print(dispersion_test)
+
+```
+
+```{r}
+# Calculate the total number of defects in Period 1
+total_defects_period1 <- sum(c.set1$defects)
+
+# Calculate the total number of assemblies in Period 1
+total_assemblies_period1 <- nrow(c.set1) * 5  # Since each sample consists of 5 assemblies
+
+# Calculate the assembly error rate for Period 1
+assembly_error_rate_period1 <- total_defects_period1 / total_assemblies_period1
+
+# Print the assembly error rate rounded to 4 decimal places
+assembly_error_rate_period1_rounded <- round(assembly_error_rate_period1, 4)
+print(assembly_error_rate_period1_rounded)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# Calculate observed frequency
+observed_frequency <- table(c.set1$defects)
+print(observed_frequency)
+
+```
+
+
+```{r}
+# Calculate lambda (mean of defects in period 1)
+lambda <- mean(c.set1$defects)
+print(lambda)
+
+```
+
+```{r}
+# Calculate expected frequency using Poisson distribution
+expected_frequency <- dpois(as.numeric(names(observed_frequency)), lambda) * length(c.set1$defects)
+print(expected_frequency)
+
+```
+
+```{r}
+# Perform chi-square goodness-of-fit test
+chisq_test <- chisq.test(observed_frequency, p = expected_frequency / sum(expected_frequency))
+print(chisq_test)
+chisq_test$p.value
+
+```
+
+```{r}
+### Set 2 defects
+
+# Step 1: Calculate the Observed Frequency
+observed_frequency <- table(c.set2$defects)
+print(observed_frequency)
+
+# Step 2: Calculate lambda (mean of defects in period 2)
+lambda <- mean(c.set2$defects)
+print(lambda)
+
+# Calculate expected frequency using Poisson distribution
+expected_frequency <- dpois(as.numeric(names(observed_frequency)), lambda) * length(c.set2$defects)
+print(expected_frequency)
+
+# Step 3: Perform chi-square goodness-of-fit test
+chisq_test <- chisq.test(observed_frequency, p = expected_frequency / sum(expected_frequency))
+print(chisq_test)
+chisq_test$p.value
+
+```
+
+

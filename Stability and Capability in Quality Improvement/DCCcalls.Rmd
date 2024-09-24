@@ -1,0 +1,190 @@
+---
+title: "DCCcalls"
+output: html_document
+date: "2024-09-23"
+---
+
+```{r}
+# Startup Code
+require(lolcat)
+require(formattable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999)
+```
+
+```{r}
+# p Chart ----------------------------------------
+
+p.Chart <- read.delim("calls.dat.txt")
+View(p.Chart)
+
+```
+
+
+```{r}
+# Create proportions column (p stands for proportion) -----------------------------------------------
+p.Chart$prop<-p.Chart$dropped_calls/p.Chart$call_sample_size
+p.Chart$prop
+```
+
+
+```{r}
+# Average proportion (centerline) -----------------------------------------
+mean_prop <- mean(p.Chart$prop)
+mean_prop
+```
+
+```{r}
+# Exact Binomial Limits ---------------------------------------------------
+binom_dist <- table.dist.binomial(n = 250, p = 0.1753143)  # Compute binomial distribution
+ro(binom_dist, 4)[1:20,]  # Round the first 20 entries to 4 decimal places
+
+```
+
+```{r}
+# Create p chart ( As a whole ) ---------------
+spc.p.chart<-spc.chart.attributes.proportion.p.binomialdistribution.simple(
+  proportions = p.Chart$prop, 
+  sample.size = p.Chart$call_sample_size,
+  chart1.point.cex = 1.3,
+  chart1.line.lwd = 2,
+  
+  )
+```
+
+```{r}
+# Control Limits and Centerline -------------------------------------------
+(p.UCL<-unique(spc.p.chart$chart1.control.limits.ucl))
+(p.center<-unique(spc.p.chart$chart1.center.line))
+(p.LCL<-unique(spc.p.chart$chart1.control.limits.lcl))
+
+climits<-as.data.frame(c(p.UCL, p.center, p.LCL))
+names(climits)<-"Limits"
+rownames(climits)<-c("UCL", "Center", "LCL")
+formattable(climits)
+```
+
+
+
+```{r}
+# Split data by Set -------------------------------------------------------
+p.set1<-subset(x = p.Chart, subset = p.Chart$call_period==1)
+p.set2<-subset(x = p.Chart, subset = p.Chart$call_period==2)
+
+# Display structure of p.set1 and p.set2
+str(p.set1)
+str(p.set2)
+
+
+
+```
+
+
+```{r}
+# Subset data for Period 1 (before intervention)
+period1_data <- subset(p.Chart, call_period == 1)
+
+# Calculate total dropped calls in Period 1
+total_dropped_calls_period1 <- sum(period1_data$dropped_calls)
+
+# Calculate total sample size (calls) in Period 1
+total_calls_period1 <- sum(period1_data$call_sample_size)
+
+# Calculate the overall proportion of dropped calls
+overall_prop_period1 <- total_dropped_calls_period1 / total_calls_period1
+
+# Round the result to 4 decimal places
+overall_prop_period1_rounded <- round(overall_prop_period1, 4)
+
+# Print the result
+print(overall_prop_period1_rounded)
+
+
+```
+
+
+```{r}
+# Proportion Chart by Set -------------------------------------------------
+spc.p.set1<-spc.chart.attributes.proportion.p.binomialdistribution.simple(proportions = p.set1$prop, sample.size = p.set1$call_sample_size, chart1.main = "p Chart Before")
+spc.p.set2<-spc.chart.attributes.proportion.p.binomialdistribution.simple(proportions = p.set2$prop, sample.size = p.set2$call_sample_size, chart1.main = "p Chart After")
+```
+
+```{r}
+# Pull out control limit information --------------------------------------
+(set1.ucl<-unique(spc.p.set1$chart1.control.limits.ucl))
+(set1.center<-unique(spc.p.set1$chart1.center.line))
+(set1.lcl<-unique(spc.p.set1$chart1.control.limits.lcl))
+
+(set2.ucl<-unique(spc.p.set2$chart1.control.limits.ucl))
+(set2.center<-unique(spc.p.set2$chart1.center.line))
+(set2.lcl<-unique(spc.p.set2$chart1.control.limits.lcl))
+```
+
+
+
+
+```{r}
+# Capability Cpk before the intervention (period) 
+
+# Get average proportion defective
+set1.center
+
+# Convert to Z Score
+(Z<-qnorm(p = 0.1409, lower.tail = F))
+
+# Convert Z to Cpk_eq
+(Cpk.eq<-Z/3)
+
+# Round the result to 4 decimal places
+Cpk_eq_period1_rounded <- round(Cpk.eq, 4)
+
+# Print the Cpk_eq result for Period 1 (before intervention)
+print(Cpk_eq_period1_rounded)
+
+
+```
+
+
+```{r}
+# Subset data for Period 2 (after intervention)
+period2_data <- subset(p.Chart, call_period == 2)
+
+# Calculate total dropped calls in Period 2
+total_dropped_calls_period2 <- sum(period2_data$dropped_calls)
+
+# Calculate total sample size (calls) in Period 2
+total_calls_period2 <- sum(period2_data$call_sample_size)
+
+# Calculate the overall proportion of dropped calls
+overall_prop_period2 <- total_dropped_calls_period2 / total_calls_period2
+
+# Round the result to 4 decimal places
+overall_prop_period2_rounded <- round(overall_prop_period2, 4)
+
+# Print the result
+print(overall_prop_period2_rounded)
+
+```
+
+
+
+```{r}
+# Capability Cpk after the intervention (period) 
+
+# Get average proportion defective
+set2.center
+
+# Convert to Z Score
+(Z<-qnorm(p = 0.2212, lower.tail = F))
+
+# Convert Z to Cpk_eq
+(Cpk.eq<-Z/3)
+
+# Round the result to 4 decimal places
+Cpk_eq_period2_rounded <- round(Cpk.eq, 4)
+
+# Print the Cpk_eq result for Period 1 (before intervention)
+print(Cpk_eq_period2_rounded)
+```
+

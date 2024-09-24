@@ -1,0 +1,87 @@
+---
+title: "SheerSheetQCC"
+output: html_document
+date: "2024-09-23"
+---
+
+```{r}
+# Libraries needed
+library(dplyr)         # For data manipulation
+library(ggplot2)       # For data visualization
+library(fitdistrplus)  # To confirm distribution fitting (exponential)
+library(qcc)           # For capability index calculations
+```
+
+```{r}
+# Step 1: Load the data
+data <- read.csv("ShearedSheet.dat", sep="\t")
+```
+
+```{r}
+# Step 2: Visualize the data to confirm exponential distribution
+ggplot(data, aes(x = Width_Deviation)) +
+  geom_histogram(binwidth = 0.5, fill="blue", color="black") +
+  theme_minimal() +
+  labs(title="Histogram of Width Deviation", x="Deviation", y="Frequency")
+```
+```{r}
+# Step 3: Fit an exponential distribution
+fit <- fitdist(data$Width_Deviation, "exp")
+```
+
+```{r}
+# Step 4: Summary statistics for Cp, Cpk, and Cpm
+USL <- 7
+LSL <- 0
+target <- 0
+```
+
+```{r}
+# Process Center using Median for Cp and Cpk, Mean for Cpm
+process_median <- median(data$Width_Deviation)
+process_mean <- mean(data$Width_Deviation)
+process_sd <- sd(data$Width_Deviation)
+```
+
+```{r}
+# Cp using within-group standard deviation
+Cp <- (USL - LSL) / (6 * process_sd)
+Cp
+```
+
+```{r}
+# Cpk Calculation (for exponential, use only USL)
+Cpk <- min((USL - process_median) / (3 * process_sd), (process_median - LSL) / (3 * process_sd))
+Cpk
+```
+
+```{r}
+# Cpm Calculation (using the target value)
+Cpm <- (USL - LSL) / (6 * sqrt(process_sd^2 + (process_mean - target)^2))
+Cpm
+```
+
+```{r}
+# Step 5: Predict percentage of data outside specification limits (based on exponential distribution)
+pct_outside <- (1 - pexp(USL, rate = 1 / process_mean))
+```
+
+
+```{r}
+# Convert to percentage
+pct_outside_percentage <- pct_outside * 100
+
+```
+
+
+```{r}
+# Print results
+list(Cp = Cp, Cpk = Cpk, Cpm = Cpm, pct_outside_percentage = pct_outside_percentage)
+```
+
+
+
+
+
+
+

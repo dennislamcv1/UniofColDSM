@@ -7,7 +7,7 @@ options(scipen=999)
 
 
 # p Chart -----------------------------------------------------------------
-p.Chart <- read.delim("G:/My Drive/Coursera/Course 2 - Methods for Quality Improvement - Stability and Capability/Module 5 - Control Charts for Discrete Data/p Chart.dat")
+p.Chart <- read.delim("p Chart.dat")
 View(p.Chart)
 
 
