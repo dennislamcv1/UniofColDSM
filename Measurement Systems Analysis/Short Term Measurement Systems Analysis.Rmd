@@ -1,80 +1,143 @@
 ---
-title: "STMSA"
+title: "Short Term Measurement Systems Analysis"
 output: html_document
-date: "2024-08-24"
+date: "2024-09-25"
 ---
 
 ```{r}
-# Load necessary libraries
+# Startup Code
 require(lolcat)
 require(dplyr)
 require(flextable)
+ro<-round.object
+nqtr<-function(x,d){noquote(t(round.object(x, d)))}
+options(scipen=999, digits = 10)
+options(show.signif.stars=FALSE)   # Turn off * to indicate significance
+```
 
-# Set options
-ro <- round.object
-nqtr <- function(x, d) { noquote(t(round.object(x, d))) }
-options(scipen = 999, digits = 10)
-options(show.signif.stars = FALSE)  # Turn off * to indicate significance
-
-# Load the data
-
+```{r}
 # Short Term MSA ----------------------------------------------------------
 Short.Term.Study.Data <- read.delim("Continuous ST R.dat")
 View(Short.Term.Study.Data)
 st<-Short.Term.Study.Data
+```
 
+```{r}
 # Review structure of file ------------------------------------------------
 str(st)
+```
 
-# Change to Factors -------------------------------------
+```{r}
+# Change Part and Operator to Factors -------------------------------------
 st$Part<-factor(st$Part)
 st$Operator<-factor(st$Operator
                     ,labels = c("Op 1", "Op 2"))
-st$Trial <-factor(st$Trial, labels = c("Num 1","Num 2","Num 3","Num 4", "Num 5"))
+```
 
 
-# Random Sequence Generator -----------------------------------------------
+```{r}
+# Random Sequence Generator (because 25 specimens) -----------------------------------------------
 sample.int(n = 25)
-
-
 ```
 
 ```{r}
 # Summary - Measurement Error should be normally distributed 
 # for most parts --------
-norm<-ro(summary.continuous(fx = Value~Part*Operator, data = st),3)
+norm<-ro(summary.continuous(fx = Value~Part*Operator, data = st),4)
 norm<-norm[-c(4,5,6)]
-norm
 
-View(norm)
+norm %>%
+  flextable %>%
+  add_header_lines(values = "Normality Test by Part / Operator") %>%
+  color(~adtest.p < 0.05, ~adtest.p, color = "red") %>%
+  color(~swtest.p < 0.05, ~swtest.p, color = "red") %>%
+  theme_box()
+```
 
-# Part 7 failed the test
+
+```{r}
+# Identify the parts and operators that failed the normality test
+parts_to_remove <- norm %>%
+  filter(adtest.p < 0.05) %>%
+  select(Part, Operator)
+
+# Remove the identified parts from the data frame
+st <- st %>%
+  filter(!(Part == 14 & Operator == "Op 1")) %>%
+  filter(!(Part == 16 & Operator == "Op 2"))
+
+# Verify the removal
+table(st$Part, st$Operator)
+
 ```
 
 ```{r}
-# Remove Part 7 from the dataset
-st <- st[which(st$Part != 7),]
 View(st)
 ```
 
-
 ```{r}
-# Split Data by Operator
-Op1<-st[which(st$Operator=="Op 1"),]
-Op1<-Op1[order(Op1$Part),]
-Op1
-
-Op2<-st[which(st$Operator=="Op 2"),]
-Op2<-Op2[order(Op2$Part),]
-Op2
-
-#Op3<-st[which(st$Operator=="Op 3"),]
-#Op3<-Op3[order(Op3$Part),]
+write.csv(st, file = "st.csv", row.names = FALSE)
 ```
 
 
 
 ```{r}
+# Xbar and R Chart --------------------------------------------------------
+# Remove parts 14 (Operator 1) and 16 (Operator 2) from the data frame
+st <- st %>%
+  filter(!(Part == 14 & Operator == "Op 1")) %>%
+  filter(!(Part == 16 & Operator == "Op 2"))
+
+
+
+# Split Data by Operator
+
+Op1<-st[which(st$Operator=="Op 1"),]
+Op1<-Op1[order(Op1$Part),]
+
+Op2<-st[which(st$Operator=="Op 2"),]
+Op2<-Op2[order(Op2$Part),]
+
+
+# Verify the split and ordering
+View(Op1)
+View(Op2)
+```
+
+
+```{r}
+# Extract data
+op1.chart<-spc.chart.variables.mean.and.meanrange(data = Op1$Value
+                                                  , sample = as.numeric(Op1$Part)
+                                                  , combine.charts="separate"
+                                                  , chart1.display=F
+                                                  , chart2.display=F)
+
+
+op2.chart<-spc.chart.variables.mean.and.meanrange(data = Op2$Value
+                                                  , sample = as.numeric(Op1$Part)
+                                                  , combine.charts="separate"
+                                                  , chart1.display=F
+                                                  , chart2.display=F)
+
+
+# Combine means and ranges
+means<-c(op1.chart$parameter.means
+         , op2.chart$parameter.means
+         )
+
+ranges<-c(op1.chart$parameter.ranges
+          , op2.chart$parameter.ranges
+          )
+
+
+
+```
+
+
+```{r}
+# Part Size Mean vs Variation (within each Operator) ----------------------
+
 # Operator 1 --------------------------------------------------------------
 op1.mean <- aggregate(
   x = Op1$Value,
@@ -91,28 +154,24 @@ op1.data<-as.data.frame(op1.data)
 names(op1.data)<-c("Mean", "Std_Dev")
 op1.data
 
-```
-
-```{r}
 # Pearson Product Moment Correlation Coefficient
 (r.op1 <- round(cor(x = op1.data$Mean
                     , y = op1.data$Std_Dev), 3))
 
-# Perform linear regression
-op1.lm <- lm(Std_Dev ~ Mean, data = op1.data)
+# Scatterplot of Mean vs Standard deviation
+plot(
+  x = op1.data$Mean,
+  y = op1.data$Std_Dev,
+  pch = 19,
+  xlab = "Mean",
+  ylab = "Standard Deviation",
+  main = "Correlation of Mean and Std. Dev.")
+abline(lm(Std_Dev ~ Mean, data = op1.data), col = "blue")
+mtext(bquote(paste("r =", .(r.op1), side = 3)))
 
-# Extract the p-value from the regression summary
-summary_op1_lm <- summary(op1.lm)
-p_value <- summary_op1_lm$coefficients[2, 4]  # Extract the p-value for the slope (Mean)
-
-# Display the p-value to 4 decimal places
-p_value <- round(p_value, 4)
-p_value
-
-
-
-
-
+# Test to see if r is different from zero
+cor.pearson.r.onesample(x = op1.data$Mean
+                       ,y = op1.data$Std_Dev)
 ```
 
 ```{r}
@@ -136,39 +195,96 @@ op2.data
 (r.op2<-round(cor(x = op2.data$Mean
                  ,y = op2.data$Std_Dev),3))
 
+# Scatterplot of Mean vs Standard deviation
+plot(
+  x = op2.data$Mean,
+  y = op2.data$Std_Dev,
+  pch = 19,
+  xlab = "Mean",
+  ylab = "Standard Deviation",
+  main = "Correlation of Mean and Std. Dev.")
+abline(lm(Std_Dev ~ Mean, data = op2.data), col = "blue")
+mtext(bquote(paste("r =", .(r.op2), side = 3)))
 
 # See if r is significantly different than zero
 cor.pearson.r.onesample(x = op2.data$Mean
                        ,y = op2.data$Std_Dev)
-
 ```
-
-
-
 
 
 ```{r}
-require(dplyr)
+# Short Term MSA ANOVA ----------------------------------------------------
+st.out <-ro(
+    msa.continuous.repeatability.reproducibility(
+      measurement = st$Value,
+      part        = st$Part,
+      appraiser   = st$Operator,
+      stat.lsl    = 28.5,
+      stat.usl    = 21.5),5)
 
+(anova.st.out <- data.frame(st.out$summary.aov.full[[1]]))
+
+
+# Add rownames to ANOVA Table
+anova.st.out$Source<-rownames(anova.st.out)
+anova.st.out<-anova.st.out[c(6,1,2,3,4,5)]
+
+# ANOVA Source Table ------------------------------------------------------
+anova.st.out %>%
+  flextable() %>%
+  add_header_lines(values = "ANOVA Source Table") %>%
+  colformat_double(j=c('Sum.Sq','Mean.Sq', 'F.value', 'Pr..F.'), digits=4, na_str = '') %>%
+  theme_box()
 
 ```
 
 ```{r}
-# Perform the ANOVA for Gage R&R
-model <- aov(Value ~ Part + Operator + Error(Part:Operator), data = st)
+# Components of Variance --------------------------------------------------
+comp.st.var<-data.frame(st.out$ev.full)
+comp.var.st.out<-comp.st.var[1:2]
 
-# Print the summary of the model to extract the variance components
-summary(model)
+# Add rownames to Variance Component Table
+comp.var.st.out$Source<-rownames(comp.var.st.out)
+comp.var.st.out<-comp.var.st.out[c(3,1,2)]
 
-
+comp.var.st.out %>%
+  flextable() %>%
+  add_header_lines(values = "Components of Variance") %>%
+  colformat_double(j=c('Component'), digits=4) %>%
+  theme_box
 ```
 
 ```{r}
-# Extract the variance components
-var_repeatability <- 0.01464
-var_reproducibility <- gaugeRR_result$reproducibility
-var_part <- 110.50282
+# Study Variation ---------------------------------------------------------
+study.st.var<-data.frame(st.out$ev.full)
+study.var.st.out<-study.st.var[3:6]
+
+# Add rownames to Study Variation Table
+study.var.st.out$Source<-rownames(study.var.st.out)
+study.var.st.out<-study.var.st.out[c(5,1,2,3,4)]
+
+study.var.st.out %>%
+  flextable() %>%
+  add_header_lines(values = "Study Variability") %>%
+  colformat_double(j=c('StdDev','StudyVar'), digits=4) %>%
+  theme_box
 ```
+
+```{r}
+# Number of distinct categories (NDC) -------------------------------------
+# Should be greater than 5
+st.out$ev.reduced.number.distinct.categories
+```
+
+```{r}
+# Discrimination Ratio
+st.out$ev.reduced.discrimination.ratio
+
+```
+
+
+
+
 
 
 

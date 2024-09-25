@@ -8,7 +8,7 @@ options(scipen=999, digits = 10)
 options(show.signif.stars=FALSE)   # Turn off * to indicate significance
 
 # Short Term MSA ----------------------------------------------------------
-Short.Term.Study.Data <- read.delim("G:/My Drive/Coursera/Course 3 - Methods for Quality Improvement - Measurement Systems Analysis/Module 4 MSA Continuous Part 2/Short Term Study Data.txt")
+Short.Term.Study.Data <- read.delim("Short Term Study Data.txt")
 View(Short.Term.Study.Data)
 st<-Short.Term.Study.Data
 
