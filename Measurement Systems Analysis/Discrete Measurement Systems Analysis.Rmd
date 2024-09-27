@@ -1,7 +1,7 @@
 ---
 title: "Discrete Measurement Systems Analysis"
 output: html_document
-date: "2024-08-25"
+date: "2024-09-27"
 ---
 
 ```{r}
@@ -15,258 +15,114 @@ nqtr<-function(x,d){noquote(t(round.object(x, d)))}
 options(scipen=999)
 ```
 
-
 ```{r}
-# Load the data
-data <- read.delim('Kevin-Oscar.dat', header = TRUE)
+# Two Appraisers, Two Categories ------------------------------------------
+OscarKevin <- read.delim("Kevin-Oscar.dat")
+View(OscarKevin)
 
-str(data)
-
-# Filter for GOOD assessments by both inspectors
-agreement_good <- subset(data, Kevin == 1 & Oscar == 1)
-
-# Count the number of agreements
-count_agreement_good <- nrow(agreement_good)
-print(paste("Number of specimens both Kevin and Oscar agreed were GOOD:", count_agreement_good))
-
+str(OscarKevin)
 ```
 
 ```{r}
 # Concordance Between Two Appraisers --------------------------------------
 # Create a contingency table of observed values
-(ct.radios.obs<-table(data$Kevin, data$Oscar))
-(ct.radios.obs <- matrix(
-  data = ct.radios.obs,
+(paper.obs <- table(OscarKevin$Oscar, OscarKevin$Kevin))
+(paper.obs <- matrix(
+  data = paper.obs,
   nrow = 2, byrow = F,
   dimnames = list(
-    "Kevin" = c("Good", "Bad"),
-    "Oscar" = c("Good", "Bad"))))
+    "Oscar" = c("Pass", "Fail"),
+    "Kevin" = c("Pass", "Fail"))))
 
-View(ct.radios.obs)
+View(paper.obs)
 ```
 
 ```{r}
-radios.msa <-
-  msa.nominal.concordance(data$Kevin, data$Oscar)
-sum.radios <- summary(radios.msa)
-nqtr(sum.radios$BetweenOperators, 5)
+paper.msa <-
+  msa.nominal.concordance(OscarKevin$Oscar
+                        , OscarKevin$Kevin)
+sum.paper <- summary(paper.msa)
+nqtr(sum.paper$BetweenOperators, 5)
 ```
 
-
-
 ```{r}
-
-
-# Reorganize the data for Light's G calculation
-Subject <- rep(1:300, each = 3)            # Subjects (each ream of paper)
-Appraiser <- rep(1:3, 300)                 # Appraisers (Kevin = 1, Oscar = 2, Lab = 3)
-Rating <- c(data$Kevin, data$Oscar, data$Lab) # Ratings by each appraiser
-
-# Combine into a data frame
-reorganized_data <- data.frame(Subject, Appraiser, Rating)
-
-
-
+# Stacked Bar Chart - Proportions
+(pc<-sum.paper$BetweenOperators$p.chance)
+(po<-sum.paper$BetweenOperators$p.agree)
+(po.pc<-po-pc)
+(denom<-1-pc)
+(pom.po<-(sum.paper$BetweenOperators$kappa.max*denom)-po.pc)
+(top.pom<-1-(pom.po+po.pc+pc))
 ```
 
 
 ```{r}
+# Create stacked bar chart
+# Stacked Bar Plot with Colors and Legend
+bar.chart<-as.table(rbind(pc, po.pc, pom.po, top.pom))
+colnames(bar.chart)<-"Proportions"
+(counts<-bar.chart)
+barplot(counts, main="Proportion Agreement",
+        col=c("lightskyblue4","lightgoldenrod3", "snow3","lavenderblush"), ylim = c(0,1)
+        ,legend.text = c("Chance","Agreement","Item Loss","Scale Loss")
+        ,args.legend = list(x = "bottomright"))
+```
 
-msa.validity<-msa.nominal.concordance(data$Kevin, data$Oscar, standard = data$Lab)
+```{r}
+# Testing for Validity ----------------------------------------------------
+OscarKevin <- read.delim("Kevin-Oscar.dat")
+View(OscarKevin)
+
+
+# Oscar vs Lab
+addmargins(table(OscarKevin$Lab, OscarKevin$Oscar))
+
+# Kevin vs Lab
+addmargins(table(OscarKevin$Lab, OscarKevin$Kevin))
+```
+
+```{r}
+msa.validity<-msa.nominal.concordance(OscarKevin$Oscar, OscarKevin$Kevin, standard = OscarKevin$Lab)
 ro(summary(msa.validity),4)
 ```
 
-
 ```{r}
-# Calculate Light's G using the provided function
-light_g <- cor.light.g.onesample(subject = reorganized_data$Subject,
-                                 rater = reorganized_data$Appraiser,
-                                 rating = reorganized_data$Rating,
-                                 rater.standard = 3) # Assuming the lab (Appraiser 3) is the standard
+Subject<-c(1:300,1:300,1:300)
+Rater<-rep(1:3, each=300)
+Rating<-cbind(OscarKevin$Kevin, OscarKevin$Oscar, OscarKevin$Lab)
 
-# Print the result (Light's G)
-print(light_g)
-```
-
-
-# Problem 2
-
-```{r}
-# Startup Code
-require(lolcat)
-require(car)
-require(dplyr)
-require(flextable)
-ro<-round.object
-nqtr<-function(x,d){noquote(t(round.object(x, d)))}
-options(scipen=999)
 
 ```
 
 
 ```{r}
-# Two Appraisers, More Than 2 Categories ----------------------------------
-data <- read.delim("Beer-Assessment.dat")
-View(data)
-ops<-data
+# Convert Rating to a long format
+Rating_long <- as.vector(t(Rating))
 
-#1: ACCEPTABLE
+# Create the dataframe
+df <- data.frame(Subject = Subject, Rater = Rater, Rating = Rating_long)
 
-#2: NOT ACCEPTABLE-GRAINY
-
-#3: NOT ACCEPTABLE-METALLIC
-
-#4: NOT ACCEPTABLE-MUSTY
+# Display the first few rows of the dataframe
+head(df)
 ```
+
+
 
 
 ```{r}
-# Filter for GOOD assessments by both inspectors
-agreement_good <- subset(data, Jeff == 1 & Steve == 1)
+# Light's G calculation ---------------------------------------------------
 
-# Count the number of agreements
-count_agreement_good <- nrow(agreement_good)
-print(paste("Number of specimens both Kevin and Oscar agreed were GOOD:", count_agreement_good))
-```
-
-```{r}
-# Recode the ratings into binary categories (Acceptable vs. Unacceptable)
-ops$Jeff_bin <- ifelse(ops$Jeff == 1, "Good", "Bad")
-ops$Steve_bin <- ifelse(ops$Steve == 1, "Good", "Bad")
+cor.light.g.onesample(subject = df$Subject
+                      ,rater = df$Rater
+                      ,rating = df$Rating
+                      ,rater.standard = 3)
 ```
 
 
-```{r}
-radios.msa <-
-  msa.nominal.concordance(ops$Jeff_bin, ops$Steve_bin)
-sum.radios <- summary(radios.msa)
-nqtr(sum.radios$BetweenOperators, 5)
-```
 
 
-```{r}
-# Filter the data to include only the unacceptable categories (2, 3, 4)
-unacceptable_data <- ops %>% filter(Jeff != 1 & Steve != 1)
-
-# Extract the ratings for the unacceptable categories
-Jeff_unacceptable <- unacceptable_data$Jeff
-Steve_unacceptable <- unacceptable_data$Steve
-
-# Calculate the Kappa statistic for the unacceptable categories
-unacceptable_kappa <- msa.nominal.concordance(Jeff_unacceptable, Steve_unacceptable)
-
-# Summarize the result
-sum_unacceptable_kappa <- summary(unacceptable_kappa)
-
-# Extract the Kappa value and round it to 4 decimal places
-kappa_value <- round(sum_unacceptable_kappa$BetweenOperators$kappa, 4)
-
-# Print the Kappa value
-print(kappa_value)
-
-```
-
-```{r}
-# Filter the data to include only the unacceptable categories (2, 3, 4)
-unacceptable_data <- ops %>% filter(Jeff != 1 & Steve != 1)
-
-# Extract the ratings for the unacceptable categories
-Jeff_unacceptable <- unacceptable_data$Jeff
-Steve_unacceptable <- unacceptable_data$Steve
-
-# Calculate the Kappa statistic for the unacceptable categories
-unacceptable_kappa <- msa.nominal.concordance(Jeff_unacceptable, Steve_unacceptable)
-
-# Summarize the result
-sum_unacceptable_kappa <- summary(unacceptable_kappa)
-
-# Extract the p-value for the symmetry test and round it to 4 decimal places
-symmetry_p_value <- round(sum_unacceptable_kappa$BetweenOperators$symmetry.p.value, 4)
-
-# Print the p-value for the symmetry test
-print(symmetry_p_value)
-
-```
 
 
-```{r}
-# Recode the data to compare "Grainy" (2) vs. other unacceptable categories (3 and 4)
-ops$Jeff_binary <- ifelse(ops$Jeff == 2, "Grainy", "Other_Unacceptable")
-ops$Steve_binary <- ifelse(ops$Steve == 2, "Grainy", "Other_Unacceptable")
-
-# Filter the data to include only the recoded unacceptable categories
-unacceptable_data <- ops %>% filter(Jeff %in% c(2, 3, 4) & Steve %in% c(2, 3, 4))
-
-# Extract the binary ratings for the comparison
-Jeff_grainy_vs_other <- unacceptable_data$Jeff_binary
-Steve_grainy_vs_other <- unacceptable_data$Steve_binary
-
-# Calculate the Kappa statistic for Grainy vs. other unacceptable categories
-grainy_kappa <- msa.nominal.concordance(Jeff_grainy_vs_other, Steve_grainy_vs_other)
-
-# Summarize the result
-sum_grainy_kappa <- summary(grainy_kappa)
-
-# Extract the Kappa value and round it to 4 decimal places
-kappa_value <- round(sum_grainy_kappa$BetweenOperators$kappa, 4)
-
-# Print the Kappa value
-print(kappa_value)
-
-```
-
-
-```{r}
-# Recode the data to compare "Metallic" (3) vs. other unacceptable categories (2 and 4)
-ops$Jeff_binary <- ifelse(ops$Jeff == 3, "Metallic", "Other_Unacceptable")
-ops$Steve_binary <- ifelse(ops$Steve == 3, "Metallic", "Other_Unacceptable")
-
-# Filter the data to include only the recoded unacceptable categories
-unacceptable_data <- ops %>% filter(Jeff %in% c(2, 3, 4) & Steve %in% c(2, 3, 4))
-
-# Extract the binary ratings for the comparison
-Jeff_metallic_vs_other <- unacceptable_data$Jeff_binary
-Steve_metallic_vs_other <- unacceptable_data$Steve_binary
-
-# Calculate the Kappa statistic for Metallic vs. other unacceptable categories
-metallic_kappa <- msa.nominal.concordance(Jeff_metallic_vs_other, Steve_metallic_vs_other)
-
-# Summarize the result
-sum_metallic_kappa <- summary(metallic_kappa)
-
-# Extract the Kappa value and round it to 4 decimal places
-kappa_value <- round(sum_metallic_kappa$BetweenOperators$kappa, 4)
-
-# Print the Kappa value
-print(kappa_value)
-
-```
-
-```{r}
-# Recode the data to compare "Musty" (4) vs. other unacceptable categories (2 and 3)
-ops$Jeff_binary <- ifelse(ops$Jeff == 4, "Musty", "Other_Unacceptable")
-ops$Steve_binary <- ifelse(ops$Steve == 4, "Musty", "Other_Unacceptable")
-
-# Filter the data to include only the recoded unacceptable categories
-unacceptable_data <- ops %>% filter(Jeff %in% c(2, 3, 4) & Steve %in% c(2, 3, 4))
-
-# Extract the binary ratings for the comparison
-Jeff_musty_vs_other <- unacceptable_data$Jeff_binary
-Steve_musty_vs_other <- unacceptable_data$Steve_binary
-
-# Calculate the Kappa statistic for Musty vs. other unacceptable categories
-musty_kappa <- msa.nominal.concordance(Jeff_musty_vs_other, Steve_musty_vs_other)
-
-# Summarize the result
-sum_musty_kappa <- summary(musty_kappa)
-
-# Extract the Kappa value and round it to 4 decimal places
-kappa_value <- round(sum_musty_kappa$BetweenOperators$kappa, 4)
-
-# Print the Kappa value
-print(kappa_value)
-
-```
 
 
 
